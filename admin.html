@@ -6,6 +6,7 @@
 <title>KTMEX — Admin Jamaitas</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
   :root {
     --green: #2ecc71;
@@ -232,6 +233,13 @@
   .loading { text-align: center; padding: 40px; color: var(--text-muted); }
   .spinner { display: inline-block; width: 24px; height: 24px; border: 2px solid var(--border); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* IMPORT STYLES */
+  #progress-log::-webkit-scrollbar { width: 4px; }
+  #progress-log::-webkit-scrollbar-track { background: var(--gray3); }
+  #progress-log::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .btn-import { background: var(--blue); color: var(--black); border: none; border-radius: 3px; padding: 10px 20px; font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; gap: 8px; }
+  .btn-import:hover { background: #2a5f8f; }
 </style>
 </head>
 <body>
@@ -283,7 +291,13 @@
       <div id="view-productos">
         <div class="content-header">
           <div class="content-title">Base de Datos</div>
-          <button class="btn-add" onclick="openModal()">＋ Nuevo registro</button>
+          <div style="display:flex;gap:10px;align-items:center">
+            <label class="btn-add" style="cursor:pointer;position:relative;background:var(--blue)">
+              📥 Importar Excel
+              <input type="file" accept=".xlsx,.xls" style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="importExcel(this)">
+            </label>
+            <button class="btn-add" onclick="openModal()">＋ Nuevo registro</button>
+          </div>
         </div>
         <div class="search-bar">
           <input class="search-input" id="search-input" placeholder="Buscar por Sebango, Número de parte, Cliente..." oninput="filterTable()">
@@ -322,12 +336,12 @@
           <button class="storage-tab active" onclick="loadBucket('clientes')" id="tab-cli">Logos Clientes</button>
           <button class="storage-tab" onclick="loadBucket('productos')" id="tab-prod">Imágenes Productos</button>
         </div>
-        <div style="margin-bottom:20px;display:flex;gap:12px;align-items:center">
+        <div style="margin-bottom:20px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
           <label class="upload-btn-big" style="cursor:pointer;position:relative">
-            ＋ Subir imagen
-            <input type="file" accept="image/*" style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="uploadToStorage(this)">
+            ＋ Subir imágenes (múltiples)
+            <input type="file" accept="image/*" multiple style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="uploadMultiple(this)">
           </label>
-          <span style="font-size:12px;color:var(--text-muted)" id="bucket-hint">Bucket: clientes</span>
+          <span style="font-size:12px;color:var(--text-muted)" id="bucket-hint">Bucket: jamaitas-clientes</span>
         </div>
         <div class="storage-grid" id="storage-grid">
           <div class="loading"><div class="spinner"></div></div>
@@ -436,6 +450,30 @@
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeConfirm()">Cancelar</button>
       <button class="btn-save" style="background:var(--red)" onclick="confirmDelete()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROGRESS MODAL -->
+<div class="modal-overlay" id="progress-modal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title" id="progress-title">Importando...</div>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+          <span id="progress-text" style="font-size:13px;color:var(--text-muted)">Procesando...</span>
+          <span id="progress-pct" style="font-size:13px;font-weight:700">0%</span>
+        </div>
+        <div style="background:var(--gray2);border-radius:4px;height:8px;overflow:hidden">
+          <div id="progress-bar" style="height:100%;background:var(--blue);width:0%;transition:width 0.3s;border-radius:4px"></div>
+        </div>
+      </div>
+      <div id="progress-log" style="background:var(--gray2);border-radius:4px;padding:12px;max-height:200px;overflow-y:auto;font-size:11px;font-family:monospace;color:var(--text-muted);line-height:1.6"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-save" id="progress-close-btn" style="display:none" onclick="closeProgress()">Cerrar</button>
     </div>
   </div>
 </div>
@@ -685,7 +723,175 @@ async function deleteImage(name) {
   loadBucket(currentBucket);
 }
 
-// ─── TOAST ────────────────────────────────────────────────────────────────────
+
+// ─── PROGRESS MODAL ──────────────────────────────────────────────────────────
+function openProgress(title) {
+  document.getElementById('progress-title').textContent = title;
+  document.getElementById('progress-bar').style.width = '0%';
+  document.getElementById('progress-pct').textContent = '0%';
+  document.getElementById('progress-text').textContent = 'Iniciando...';
+  document.getElementById('progress-log').innerHTML = '';
+  document.getElementById('progress-close-btn').style.display = 'none';
+  document.getElementById('progress-modal').classList.add('open');
+}
+function updateProgress(current, total, msg) {
+  const pct = Math.round((current / total) * 100);
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent = pct + '%';
+  document.getElementById('progress-text').textContent = msg;
+  const log = document.getElementById('progress-log');
+  log.innerHTML += `<div>${msg}</div>`;
+  log.scrollTop = log.scrollHeight;
+}
+function closeProgress() {
+  document.getElementById('progress-modal').classList.remove('open');
+}
+function finishProgress(msg) {
+  document.getElementById('progress-text').textContent = msg;
+  document.getElementById('progress-bar').style.width = '100%';
+  document.getElementById('progress-pct').textContent = '100%';
+  document.getElementById('progress-close-btn').style.display = 'block';
+  const log = document.getElementById('progress-log');
+  log.innerHTML += `<div style="color:var(--green);font-weight:700">✓ ${msg}</div>`;
+  log.scrollTop = log.scrollHeight;
+}
+
+// ─── IMPORT EXCEL ─────────────────────────────────────────────────────────────
+async function importExcel(input) {
+  const file = input.files[0];
+  if (!file) return;
+  input.value = '';
+
+  openProgress('Importando Excel...');
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+      if (!rows.length) {
+        finishProgress('El archivo está vacío o no tiene datos.');
+        return;
+      }
+
+      updateProgress(0, rows.length, `${rows.length} filas encontradas. Procesando...`);
+
+      // Map column names — supports both Spanish headers and English
+      // Expected columns (case-insensitive, flexible matching):
+      const colMap = (row) => ({
+        sebango:              findCol(row, ['SEBANGO','sebango']),
+        numero_parte:         findCol(row, ['Numero de parte','NUMERO DE PARTE','numero_parte','NumeroParte']),
+        sebango_cliente:      findCol(row, ['SEBANGO CLIENTE','sebango_cliente','SebangoCliente']),
+        ubicacion:            findCol(row, ['UBICACIÓN','UBICACION','ubicacion']),
+        tipo_caja:            findCol(row, ['TIPO DE CAJA','tipo_caja','TipoCaja','Empaque']),
+        qpc:                  findCol(row, ['QPC','qpc']),
+        lado:                 findCol(row, ['LADO','lado']),
+        cliente:              findCol(row, ['CLIENTE','cliente']),
+        minimo:               findCol(row, ['MINIMO','MÍNIMO','minimo','Minimo de cajas']),
+        maximo:               findCol(row, ['MAXIMO','MÁXIMO','maximo','Maximo de cajas']),
+        color_custom:         findCol(row, ['color_custom','COLOR','color']),
+        cajas_por_ubicacion:  findCol(row, ['# DE CAJAS POR UBICACIÓN','cajas_por_ubicacion','CajasPorUbicacion']),
+        piezas_por_ubicacion: findCol(row, ['PIEZAS TOTALES POR UBICACIÓN','piezas_por_ubicacion']),
+        num_ubicaciones:      findCol(row, ['# DE UBICACIONES','num_ubicaciones']),
+        total_piezas:         findCol(row, ['TOTAL DE PIEZAS','total_piezas']),
+      });
+
+      let inserted = 0, updated = 0, errors = 0;
+
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const mapped = colMap(row);
+
+        if (!mapped.sebango || !mapped.numero_parte) {
+          updateProgress(i + 1, rows.length, `⚠ Fila ${i + 2}: sin Sebango o Nº Parte — omitida`);
+          errors++;
+          continue;
+        }
+
+        const payload = {
+          sebango:              String(mapped.sebango).trim().toUpperCase(),
+          numero_parte:         String(mapped.numero_parte).trim(),
+          sebango_cliente:      mapped.sebango_cliente ? String(mapped.sebango_cliente).trim() : null,
+          ubicacion:            mapped.ubicacion ? String(mapped.ubicacion).trim() : null,
+          tipo_caja:            mapped.tipo_caja ? String(mapped.tipo_caja).trim() : null,
+          qpc:                  mapped.qpc !== '' ? Number(mapped.qpc) : null,
+          lado:                 mapped.lado ? String(mapped.lado).trim().toUpperCase() : null,
+          cliente:              mapped.cliente ? String(mapped.cliente).trim() : null,
+          minimo:               mapped.minimo !== '' ? Number(mapped.minimo) : null,
+          maximo:               mapped.maximo !== '' ? Number(mapped.maximo) : null,
+          color_custom:         mapped.color_custom ? String(mapped.color_custom).trim() : null,
+          cajas_por_ubicacion:  mapped.cajas_por_ubicacion !== '' ? Number(mapped.cajas_por_ubicacion) : null,
+          piezas_por_ubicacion: mapped.piezas_por_ubicacion !== '' ? Number(mapped.piezas_por_ubicacion) : null,
+          num_ubicaciones:      mapped.num_ubicaciones !== '' ? Number(mapped.num_ubicaciones) : null,
+          total_piezas:         mapped.total_piezas !== '' ? Number(mapped.total_piezas) : null,
+        };
+
+        // Upsert — inserta si no existe, actualiza si ya existe por sebango
+        const { error } = await db.from(TABLE).upsert(payload, { onConflict: 'sebango' });
+
+        if (error) {
+          updateProgress(i + 1, rows.length, `✕ Fila ${i + 2} (${payload.sebango}): ${error.message}`);
+          errors++;
+        } else {
+          inserted++;
+          if ((i + 1) % 5 === 0 || i === rows.length - 1) {
+            updateProgress(i + 1, rows.length, `✓ ${inserted} registros procesados de ${rows.length}...`);
+          }
+        }
+      }
+
+      finishProgress(`Completado: ${inserted} registros importados, ${errors} errores`);
+      loadRecords();
+
+    } catch (err) {
+      finishProgress('Error leyendo el archivo: ' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// Helper: find value in row by possible column name variants
+function findCol(row, names) {
+  for (const name of names) {
+    if (row[name] !== undefined && row[name] !== '') return row[name];
+    // Case-insensitive search
+    const key = Object.keys(row).find(k => k.toLowerCase().trim() === name.toLowerCase().trim());
+    if (key !== undefined) return row[key];
+  }
+  return '';
+}
+
+// ─── UPLOAD MULTIPLE IMAGES ───────────────────────────────────────────────────
+async function uploadMultiple(input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  input.value = '';
+
+  const bucketName = currentBucket === 'clientes' ? BUCKET_CLIENTES : BUCKET_PRODUCTOS;
+  openProgress(`Subiendo ${files.length} imagen(es) a ${bucketName}...`);
+
+  let ok = 0, fail = 0;
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    updateProgress(i, files.length, `Subiendo: ${file.name}`);
+    const { error } = await db.storage.from(bucketName).upload(file.name, file, { upsert: true });
+    if (error) {
+      updateProgress(i + 1, files.length, `✕ Error: ${file.name} — ${error.message}`);
+      fail++;
+    } else {
+      ok++;
+      updateProgress(i + 1, files.length, `✓ ${file.name}`);
+    }
+  }
+
+  finishProgress(`Completado: ${ok} subidas correctamente, ${fail} errores`);
+  loadBucket(currentBucket);
+}
+
 function showToast(msg, type = 'success') {
   const t = document.getElementById('toast');
   t.textContent = (type === 'success' ? '✓ ' : '✕ ') + msg;
