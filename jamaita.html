@@ -208,7 +208,7 @@ body{font-family:'Barlow Condensed',sans-serif;background:#d0d0d0;min-height:100
 
 /* ── BOT ROW: 27.39mm (30.43% de 90mm) ──
    CLIENTE(6mm) | campo3(37.93%) | min(30.53%) | max(30.53%)
-   spacer=11.74mm | label=7.83mm | value=7.83mm
+   min/max: sin spacer, label=50%, value=50%
 */
 .j-bot{
   display:grid;
@@ -226,32 +226,29 @@ body{font-family:'Barlow Condensed',sans-serif;background:#d0d0d0;min-height:100
   white-space:nowrap;color:#111;
 }
 .j-f3{
-  font-size:30px;font-weight:700;  /* 36×0.822 */
+  font-size:30px;font-weight:700;
   display:flex;align-items:center;justify-content:center;
   text-align:center;padding:1mm 2mm;
   word-break:break-word;overflow:hidden;
   transition:background .2s,color .2s;
 }
-/* spacer=11.74mm | label=7.83mm | value=7.83mm */
+/* spacer=0 | label=50% | value=50% — sin espacio en blanco */
 .j-mmcell{
-  display:grid;grid-template-rows:11.74mm 7.83mm 7.83mm;
+  display:grid;grid-template-rows:1fr 1fr;
   overflow:hidden;
 }
-.j-mm-spacer{background:white;}
 .j-mmlbl{
-  font-size:9px;font-weight:400;
+  font-size:11px;font-weight:700;
   display:flex;align-items:center;justify-content:center;
-  text-align:center;padding:1px 3px;
-  border-top:var(--bd);border-bottom:1px solid #111;
+  text-align:center;padding:2px 4px;
+  border-top:var(--bd);border-bottom:1px solid rgba(0,0,0,0.3);
 }
 .j-mmval{
-  font-size:15px;font-weight:700;  /* 18×0.822 */
+  font-size:22px;font-weight:900;
   display:flex;align-items:center;justify-content:center;
 }
-.j-mmcell.mn .j-mm-spacer{background:white;}
 .j-mmcell.mn .j-mmlbl{background:var(--red);color:white;border-color:#111;}
 .j-mmcell.mn .j-mmval{background:var(--red);color:white;}
-.j-mmcell.mx .j-mm-spacer{background:white;}
 .j-mmcell.mx .j-mmlbl{background:var(--lime);color:#111;border-color:#111;}
 .j-mmcell.mx .j-mmval{background:var(--lime);color:#111;}
 
@@ -292,8 +289,6 @@ body{font-family:'Barlow Condensed',sans-serif;background:#d0d0d0;min-height:100
   .c-verde{background:#00B050!important;color:white!important;}
   .j-mmcell.mn .j-mmlbl,.j-mmcell.mn .j-mmval{background:#FF0000!important;color:white!important;}
   .j-mmcell.mx .j-mmlbl,.j-mmcell.mx .j-mmval{background:#92D050!important;color:#111!important;}
-  .j-vlbl-ktmex,.j-vlbl-cli{background:#E8E8E8!important;}
-  .j-mm-spacer{background:white!important;}
 }
 
 /* LOADING */
@@ -512,12 +507,10 @@ function buildJ(r,arrVer,qrDivId){
     <div class="j-vlbl-cli">CLIENTE</div>
     <div ${ca(r,'j-f3')}>${r.sebango_cliente||''}</div>
     <div class="j-mmcell mn">
-      <div class="j-mm-spacer"></div>
       <div class="j-mmlbl">Mínimo de cajas</div>
       <div class="j-mmval">${r.minimo??''}</div>
     </div>
     <div class="j-mmcell mx">
-      <div class="j-mm-spacer"></div>
       <div class="j-mmlbl">Máximo de cajas</div>
       <div class="j-mmval">${r.maximo??''}</div>
     </div>
