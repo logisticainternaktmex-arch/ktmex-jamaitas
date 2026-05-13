@@ -4,57 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>KTMEX — Visor Jamaitas</title>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;900&family=Barlow:wght@400;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
-/*
-  ═══════════════════════════════════════════════════════════════
-  MEDIDAS EXACTAS — Ingeniería inversa del Excel ajustado por usuario
-  
-  COLUMNAS (todas = 8.8867 chars = 67.2px, excepto B = 3.664 chars = 30.6px)
-  ┌──────────────────────────────────────────────────────────────┐
-  │ campo4  38.89%  │ empaque 20.37% │ qpc 13.58% │ cli 27.16% │
-  ├──────────────────────────────────────────────────────────────┤
-  │30.6px│ campos1+2  37.93% │  campo11  48.28%  │  QR  13.79% │
-  ├──────────────────────────────────────────────────────────────┤
-  │30.6px│ campo3     37.93% │  min   30.53%   │  max  30.53%  │
-  └──────────────────────────────────────────────────────────────┘
-
-  FILAS (todas = 13.5pt = 18px)
-  TOP:   rows 3-7  = 5 rows = 90px
-  MID:   rows 8-18 = 11 rows = 198px
-    campo1: rows 8-14  = 7 rows = 126px
-    campo2: rows 15-18 = 4 rows = 72px
-    QR lbl: rows 8-10  = 3 rows = 54px
-    QR img: rows 11-21 = 11 rows = 198px
-  BOT:   rows 19-25 = 7 rows = 126px
-    min/max lbl: rows 22-23 = 2 rows = 36px
-    min/max val: rows 24-25 = 2 rows = 36px
-  TOTAL HEIGHT: 414px
-
-  FUENTES (del Excel ajustado):
-  campo4:          28pt bold
-  headers:         12pt normal
-  empaque val:     14pt bold
-  qpc val:         16pt bold
-  campo1/3:        36pt bold
-  campo2:          18pt bold
-  QR label:        11pt bold
-  min/max label:   11pt normal
-  min/max value:   18pt bold
-  KTMEX/CLIENTE:   8pt bold (rotated)
-  ═══════════════════════════════════════════════════════════════
-*/
-
 :root{
-  --black:#111;--blue:#3576ac;--muted:#888;
-  --green:#00B050;--yellow:#FFC000;--red:#FF0000;--lime:#92D050;
-  --gray:#E8E8E8;
-  --bd:1px solid #111;
+  --black:#000000;--white:#ffffff;
+  --yellow-lh:#FFC000;--green-rh:#00B050;
+  --red-min:#FF0000;--lime-max:#92D050;
+  --gray-label:#E8E8E8;
+  --blue:#3576ac;--muted:#888;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Barlow Condensed',sans-serif;background:#d0d0d0;min-height:100vh;}
+body{font-family:'Barlow',sans-serif;background:#d0d0d0;min-height:100vh;}
 
 /* ── HEADER ── */
 .app-hdr{background:#111;color:white;padding:10px 20px;display:flex;align-items:center;gap:12px;border-bottom:3px solid var(--blue);}
@@ -96,259 +58,224 @@ body{font-family:'Barlow Condensed',sans-serif;background:#d0d0d0;min-height:100
 .ao .al{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;color:#111;}
 
 /* ── TOOLBAR ── */
-.j-bar{max-width:1000px;margin:0 auto 12px;padding:0 16px;display:flex;gap:10px;flex-wrap:wrap;}
+.j-bar{max-width:960px;margin:0 auto 12px;padding:0 16px;display:flex;gap:10px;flex-wrap:wrap;}
 .tbtn{background:var(--blue);color:white;border:none;border-radius:4px;padding:9px 18px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;}
 .tbtn.dk{background:#333;}
 
-/* ═══════════════════════════════════════════════════════════
-   JAMAITA — PIXEL-PERFECT FROM USER-ADJUSTED EXCEL
-   ═══════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════
+   JAMAITA — Layout fiel al template HTML compartido
+   Dimensiones: 140mm × 90mm (referencia)
+   ====================================================
+   FILA 1 (22%): loc(45%) | emp(15%) | qpc(15%) | cli(25%)
+   FILA 2 (flex): ktmex(12mm) | parte(flex) | qr(32mm)
+   FILA 3 (25%): cli-val(45%) | min(flex) | max(flex)
+══════════════════════════════════════════════════════ */
 .j-sheet{padding:12px 16px 24px;}
-.j-pair{display:flex;flex-direction:column;gap:18px;max-width:1000px;margin:0 auto;}
+.j-pair{display:flex;flex-direction:column;gap:16px;max-width:960px;margin:0 auto;}
 
+/* The label box — matches template exactly */
 .jamaita{
-  background:white;
-  border:2px solid #111;
   width:100%;
-  font-family:'Arial',sans-serif; /* Match Excel font */
+  background:white;
+  border:2px solid var(--black);
+  display:flex;
+  flex-direction:column;
   overflow:hidden;
+  font-family:'Barlow Condensed',sans-serif;
+  /* Keep aspect ratio close to 140×90mm */
+  aspect-ratio:140/90;
 }
 
-/* ════ TOP ROW — 90px total ════
-   campo4: 38.89% | empaque: 20.37% | qpc: 13.58% | cliente: 27.16%
-   Empaque/QPC/Cliente split: header (rows3-4=36px) + value (rows5-7=54px)
-*/
-.j-top{
-  display:grid;
-  grid-template-columns: 38.89% 20.37% 13.58% 27.16%;
-  height:90px;
-  border-bottom:2px solid #111;
+/* ── FILA 1: TOP — 22% height ── */
+.row-top{
+  display:flex;
+  height:22%;
+  border-bottom:2px solid var(--black);
+  flex-shrink:0;
 }
-.j-top>*{border-right:2px solid #111;}
-.j-top>*:last-child{border-right:none;}
+.row-top>div{padding:3px 4px;position:relative;}
+.c-loc {width:45%;border-right:2px solid var(--black);}
+.c-emp {width:15%;border-right:2px solid var(--black);}
+.c-qpc {width:15%;border-right:2px solid var(--black);}
+.c-cli-lbl{width:25%;}
 
-/* campo 4 — ubicacion */
-.j-f4{
+/* Small label text inside each cell */
+.cell-lbl{
+  font-size:clamp(6px,0.9vw,9px);
+  font-weight:700;text-transform:uppercase;
+  color:#444;display:block;margin-bottom:1px;
+  font-family:'Barlow',sans-serif;
+}
+/* Main value in top cells */
+.cell-val{
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:900;
+  display:flex;align-items:center;
+  height:calc(100% - 14px);
+  word-break:break-word;overflow:hidden;
+}
+.cell-val.loc-val{font-size:clamp(12px,2.2vw,26px);}
+.cell-val.emp-val{font-size:clamp(9px,1.4vw,16px);}
+.cell-val.qpc-val{font-size:clamp(11px,1.8vw,20px);}
+
+/* Cliente image */
+.cli-img-wrap{
   display:flex;align-items:center;justify-content:center;
-  padding:6px 10px;text-align:center;
-  font-size:28px;font-weight:700; /* 28pt from Excel */
-  height:90px;word-break:break-word;
+  height:calc(100% - 14px);
 }
-/* campo 4 — 3 arrows */
-.j-f4-arrows{
+.cli-img-wrap img{max-height:100%;max-width:100%;object-fit:contain;}
+.cli-img-txt{font-size:clamp(8px,1.2vw,14px);font-weight:700;color:#111;text-align:center;}
+
+/* ── FILA 2: MID — flex (fills remaining) ── */
+.row-mid{
+  display:flex;
+  flex:1;
+  border-bottom:2px solid var(--black);
+  min-height:0;
+}
+/* KTMEX vertical */
+.c-ktmex{
+  width:12mm;
+  writing-mode:vertical-rl;transform:rotate(180deg);
+  font-weight:900;font-size:clamp(8px,1.2vw,14px);
+  letter-spacing:2px;text-transform:uppercase;
+  text-align:center;
+  border-right:2px solid var(--black);
+  display:flex;align-items:center;justify-content:center;
+  background:var(--gray-label);flex-shrink:0;
+}
+/* Center part: sebango (top) + numero de parte (bottom) */
+.c-part{
+  flex:1;
+  display:flex;flex-direction:column;
+  border-right:2px solid var(--black);
+  min-width:0;
+}
+.part-sebango{
+  flex:1;
+  display:flex;align-items:center;justify-content:center;
+  text-align:center;padding:4px 8px;
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:clamp(28px,5.5vw,72px);
+  font-weight:900;letter-spacing:-0.5px;line-height:1;
+  word-break:break-word;overflow:hidden;
+  border-bottom:2px solid var(--black);
+  transition:background .2s,color .2s;
+}
+/* Version flechas: campo4 en el sebango area */
+.part-sebango.arrows-mode{
+  font-size:inherit;
   display:flex;align-items:center;justify-content:space-evenly;
-  padding:4px 8px;height:90px;
+  padding:4px;
 }
-
-/* Empaque / QPC / Cliente — split header + value */
-.j-hcell{
-  display:grid;
-  grid-template-rows:36px 54px; /* rows3-4=36px, rows5-7=54px */
-}
-.j-hlbl{
-  /* 12pt normal */
-  font-size:12px;font-weight:400;color:#111;
-  text-align:center;
-  display:flex;align-items:center;justify-content:center;
-  border-bottom:1px solid #111;
-  padding:2px 4px;
-}
-.j-hval{
-  display:flex;align-items:center;justify-content:center;
-  text-align:center;padding:2px 4px;
-}
-.j-hval-emp{font-size:14px;font-weight:700;}  /* 14pt bold */
-.j-hval-qpc{font-size:16px;font-weight:700;}  /* 16pt bold */
-.j-cli7{display:flex;align-items:center;justify-content:center;height:54px;padding:4px 6px;}
-.j-cli7 img{max-height:46px;max-width:100%;object-fit:contain;}
-.j-cli7-txt{font-size:14px;font-weight:700;color:#111;text-align:center;}
-
-/* ════ MID ROW — 198px total ════
-   KTMEX(30.6px fixed) | campos1+2(37.93%) | campo11(48.28%) | QR(13.79%)
-   campo1: 126px | campo2: 72px
-   QR label: 54px (rows8-10) | QR code: 144px (rows11-21 from mid perspective = 198-54=144px)
-*/
-.j-mid{
-  display:grid;
-  grid-template-columns: 30.6px calc((100% - 30.6px)*0.3793) calc((100% - 30.6px)*0.4828) calc((100% - 30.6px)*0.1379);
-  height:198px;
-  border-bottom:2px solid #111;
-}
-.j-mid>*{border-right:2px solid #111;}
-.j-mid>*:last-child{border-right:none;}
-
-/* KTMEX vertical label */
-.j-vlbl-ktmex{
-  writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg);
-  font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
-  background:var(--gray);
-  display:flex;align-items:center;justify-content:center;
-  white-space:nowrap;color:#111;
-}
-
-/* campo1 + campo2 stacked */
-.j-c12{
-  display:grid;
-  grid-template-rows:126px 72px;
-}
-.j-f1{
-  /* 36pt bold from Excel */
-  font-size:36px;font-weight:700;
+.part-numparte{
   display:flex;align-items:center;justify-content:center;
   text-align:center;padding:4px 8px;
-  border-bottom:2px solid #111;
-  word-break:break-word;overflow:hidden;
-  transition:background .2s,color .2s;
-}
-.j-f2{
-  /* 18pt bold from Excel */
-  font-size:18px;font-weight:700;
-  display:flex;align-items:center;justify-content:center;
-  text-align:center;
-  padding:4px 10px; /* padding so text looks enclosed */
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:clamp(10px,1.8vw,20px);font-weight:700;
   word-break:break-all;overflow:hidden;
+  height:30%;flex-shrink:0;
 }
-
-/* campo11 — product image */
-.j-f11{
+/* QR side */
+.c-qr{
+  width:32mm;
+  border-left:0;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:4px 3px;
+  flex-shrink:0;gap:3px;
+}
+.c-qr .qr-title{
+  font-size:clamp(9px,1.2vw,13px);font-weight:700;
+  color:#111;text-align:center;width:100%;
+  border-bottom:1px solid #bbb;padding-bottom:2px;margin-bottom:2px;
+}
+.c-qr .qr-div{
   display:flex;align-items:center;justify-content:center;
-  padding:8px;overflow:hidden;
-  position:relative;
+  flex:1;width:100%;overflow:hidden;
 }
-.j-f11 img{max-width:100%;max-height:182px;object-fit:contain;}
-.j-f11-ph{color:#ccc;font-size:12px;text-align:center;}
-/* Horizontal line at 126px (campo1/campo2 boundary) across campo11 */
-.j-f11::after{
-  content:'';position:absolute;
-  left:0;right:0;top:126px;
-  height:2px;background:#111;
-  pointer-events:none;
-}
-
-/* QR column — label (54px) + code area (144px) — NO separator */
-.j-qr-col{
-  display:grid;
-  grid-template-rows:54px 1fr;
-  overflow:hidden;
-  position:relative;
-}
-/* Horizontal line at 126px across QR col too */
-.j-qr-col::after{
-  content:'';position:absolute;
-  left:0;right:0;top:126px;
-  height:2px;background:#111;
-  pointer-events:none;
-}
-.j-qr-lbl{
-  /* 11pt bold from Excel */
-  font-size:11px;font-weight:700;
-  display:flex;align-items:center;justify-content:center;
-  color:#111;
-  border-bottom:1px solid #111; /* thin line under QR label only */
-}
-.j-qr-img{
-  display:flex;align-items:center;justify-content:center;
-  padding:4px 2px;overflow:hidden;
-}
-.j-qr-img>div{
-  display:flex;align-items:center;justify-content:center;
-  width:100%;height:100%;
-}
-.j-qr-img img,.j-qr-img canvas{
+.c-qr .qr-div img,
+.c-qr .qr-div canvas{
   max-width:100%!important;
-  max-height:120px!important;
-  width:auto!important;
-  height:auto!important;
+  max-height:80px!important;
+  width:auto!important;height:auto!important;
 }
 
-/* ════ BOT ROW — 126px total ════
-   CLIENTE(30.6px) | campo3(37.93%) | min(30.53%) | max(30.53%)
-   min/max split: label(36px rows22-23) + value(36px rows24-25) + campo3 top space(54px rows19-21)
-*/
-.j-bot{
-  display:grid;
-  grid-template-columns: 30.6px calc((100% - 30.6px)*0.3793) calc((100% - 30.6px)*0.3053) calc((100% - 30.6px)*0.3053);
-  height:126px;
+/* ── FILA 3: BOT — 25% height ── */
+.row-bot{
+  display:flex;
+  height:25%;
+  flex-shrink:0;
 }
-.j-bot>*{border-right:2px solid #111;}
-.j-bot>*:last-child{border-right:none;}
-
-/* CLIENTE vertical label */
-.j-vlbl-cli{
-  writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg);
-  font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
-  background:var(--gray);
+/* CLIENTE vertical */
+.c-cliente-lbl{
+  width:12mm;
+  writing-mode:vertical-rl;transform:rotate(180deg);
+  font-weight:900;font-size:clamp(8px,1.2vw,14px);
+  letter-spacing:2px;text-transform:uppercase;
+  text-align:center;
+  border-right:2px solid var(--black);
   display:flex;align-items:center;justify-content:center;
-  white-space:nowrap;color:#111;
+  background:var(--gray-label);flex-shrink:0;
 }
-
-/* campo3 */
-.j-f3{
-  /* 36pt bold */
-  font-size:36px;font-weight:700;
+/* campo3 — sebango cliente */
+.c-seb-cli{
+  width:calc(45% - 12mm);
+  border-right:2px solid var(--black);
   display:flex;align-items:center;justify-content:center;
   text-align:center;padding:4px 8px;
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:clamp(20px,4vw,56px);font-weight:900;
   word-break:break-word;overflow:hidden;
   transition:background .2s,color .2s;
 }
-
-/* Min / Max — label (36px) + value (36px), top 54px = campo3 area empty space */
-.j-mmcell{
-  display:grid;
-  grid-template-rows:54px 36px 36px;
-  overflow:hidden;
+/* Min / Max */
+.c-mm{flex:1;display:flex;}
+.mm-cell{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
 }
-.j-mm-spacer{} /* empty top space aligns with campo3 */
-.j-mmlbl{
-  /* 11pt normal */
-  font-size:11px;font-weight:400;
+.mm-cell:first-child{border-right:2px solid var(--black);}
+.mm-lbl{
+  font-size:clamp(7px,1vw,11px);font-weight:700;
+  text-transform:uppercase;text-align:center;
+  padding:3px 4px;width:100%;
+  border-bottom:1px solid rgba(0,0,0,.3);
+}
+.mm-val{
+  font-size:clamp(18px,3.5vw,38px);font-weight:900;
   display:flex;align-items:center;justify-content:center;
-  text-align:center;padding:2px 4px;
-  border-top:2px solid #111;
-  border-bottom:1px solid #111;
+  flex:1;
 }
-.j-mmval{
-  /* 18pt bold */
-  font-size:18px;font-weight:700;
-  display:flex;align-items:center;justify-content:center;
-}
-/* Min = red */
-.j-mmcell.mn .j-mm-spacer{background:white;}
-.j-mmcell.mn .j-mmlbl{background:var(--red);color:white;border-color:#111;}
-.j-mmcell.mn .j-mmval{background:var(--red);color:white;}
-/* Max = lime */
-.j-mmcell.mx .j-mm-spacer{background:white;}
-.j-mmcell.mx .j-mmlbl{background:var(--lime);color:#111;border-color:#111;}
-.j-mmcell.mx .j-mmval{background:var(--lime);color:#111;}
+.mm-cell.mn{background:var(--red-min);color:white;}
+.mm-cell.mx{background:var(--lime-max);color:#111;}
 
 /* ── COLOR COMBINATIONS ── */
 .c-negro   {background:#222!important;color:white!important;}
-.c-amarillo{background:var(--yellow)!important;color:#111!important;}
-.c-verde   {background:var(--green)!important;color:white!important;}
+.c-amarillo{background:var(--yellow-lh)!important;color:#111!important;}
+.c-verde   {background:var(--green-rh)!important;color:white!important;}
 
-/* ── PRINT ── */
+/* ── PRINT — 2 per page ── */
 @media print{
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
   body{background:white!important;margin:0;padding:0;}
   .app-hdr,.j-bar{display:none!important;}
   #jamaita-panel{display:block!important;}
-  .j-sheet{padding:4mm;}
+  .j-sheet{padding:5mm;}
   .j-pair{
-    gap:4mm;max-width:100%;margin:0;
-    height:calc(297mm - 16mm);
+    gap:5mm;max-width:100%;margin:0;
+    height:calc(297mm - 20mm);
     display:grid;grid-template-rows:1fr 1fr;
     page-break-after:always;
   }
   .j-wrap{height:100%;display:flex;flex-direction:column;}
-  .jamaita{flex:1;border:1pt solid #111;display:flex;flex-direction:column;}
-  .j-top{flex:0 0 auto;}
-  .j-mid{flex:1;}
-  .j-bot{flex:0 0 auto;}
+  .jamaita{flex:1;aspect-ratio:unset;}
   .c-negro{background:#222!important;color:white!important;}
   .c-amarillo{background:#FFC000!important;color:#111!important;}
   .c-verde{background:#00B050!important;color:white!important;}
-  .j-mmcell.mn .j-mmlbl,.j-mmcell.mn .j-mmval{background:#FF0000!important;color:white!important;}
-  .j-mmcell.mx .j-mmlbl,.j-mmcell.mx .j-mmval{background:#92D050!important;color:#111!important;}
+  .mm-cell.mn{background:#FF0000!important;color:white!important;}
+  .mm-cell.mx{background:#92D050!important;color:#111!important;}
 }
 
 /* ── LOADING ── */
@@ -459,25 +386,35 @@ const TBL      = 'jamaitas_bd';
 const BKT_CLI  = 'jamaitas-clientes';
 const BKT_PROD = 'jamaitas-productos';
 
-/* 3 copies of arrow for campo4 */
+/* Arrow SVGs — 3 copies spread in campo4 */
 const ARR = {
-  1:`<svg viewBox="0 0 50 70" width="38" height="54"><polygon points="25,2 48,68 25,52 2,68" fill="#111"/></svg>`,
-  2:`<svg viewBox="0 0 50 70" width="38" height="54"><polygon points="25,68 48,2 25,18 2,2" fill="#111"/></svg>`,
-  3:`<svg viewBox="0 0 70 50" width="54" height="38"><polygon points="2,25 68,2 52,25 68,48" fill="#111"/></svg>`,
-  4:`<svg viewBox="0 0 70 50" width="54" height="38"><polygon points="68,25 2,2 18,25 2,48" fill="#111"/></svg>`,
+  1:`<svg viewBox="0 0 50 70" width="36" height="50"><polygon points="25,2 48,68 25,52 2,68" fill="#111"/></svg>`,
+  2:`<svg viewBox="0 0 50 70" width="36" height="50"><polygon points="25,68 48,2 25,18 2,2" fill="#111"/></svg>`,
+  3:`<svg viewBox="0 0 70 50" width="50" height="36"><polygon points="2,25 68,2 52,25 68,48" fill="#111"/></svg>`,
+  4:`<svg viewBox="0 0 70 50" width="50" height="36"><polygon points="68,25 2,2 18,25 2,48" fill="#111"/></svg>`,
 };
 
 let db, rec, arw;
 window.onload = () => { db = window.supabase.createClient(SB_URL, SB_KEY); };
 
+/* ── NAVIGATION ── */
 function goTo(p){
   document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));
   document.getElementById(p+'-panel').classList.add('on');
-  if(p==='search'){rec=arw=null;document.getElementById('seb').value='';document.getElementById('err').style.display='none';}
-  if(p==='arrow'){[1,2,3,4].forEach(i=>document.getElementById('ao'+i).className='ao');document.getElementById('btnok').disabled=true;arw=null;}
+  if(p==='search'){
+    rec=arw=null;
+    document.getElementById('seb').value='';
+    document.getElementById('err').style.display='none';
+  }
+  if(p==='arrow'){
+    [1,2,3,4].forEach(i=>document.getElementById('ao'+i).className='ao');
+    document.getElementById('btnok').disabled=true;
+    arw=null;
+  }
 }
 function load(v){document.getElementById('loader').className='lov'+(v?' on':'');}
 
+/* ── SEARCH ── */
 async function buscar(){
   const s=document.getElementById('seb').value.trim();
   if(!s)return;
@@ -486,23 +423,35 @@ async function buscar(){
   load(true);
   const{data,error}=await db.from(TBL).select('*').ilike('sebango',s).maybeSingle();
   load(false);
-  if(error||!data){e.textContent=`No se encontró "${s}". Verifica el número.`;e.style.display='block';return;}
+  if(error||!data){
+    e.textContent=`No se encontró "${s}". Verifica el número.`;
+    e.style.display='block';return;
+  }
   rec=data;
   document.getElementById('mseb').textContent=rec.sebango;
-  document.getElementById('minfo').textContent=`${rec.numero_parte||''} · ${rec.cliente||''} · LADO: ${rec.lado||''}`;
+  document.getElementById('minfo').textContent=
+    `${rec.numero_parte||''} · ${rec.cliente||''} · LADO: ${rec.lado||''}`;
   goTo('mode');
 }
 
+/* ── MODE ── */
 function selMode(m){if(m==='ubicacion')render(null);else goTo('arrow');}
-function pickA(n){arw=n;[1,2,3,4].forEach(i=>document.getElementById('ao'+i).className='ao'+(i===n?' sel':''));document.getElementById('btnok').disabled=false;}
+
+/* ── ARROWS ── */
+function pickA(n){
+  arw=n;
+  [1,2,3,4].forEach(i=>document.getElementById('ao'+i).className='ao'+(i===n?' sel':''));
+  document.getElementById('btnok').disabled=false;
+}
 function okArrow(){if(arw)render(arw);}
 
+/* ── COLOR LOGIC ── */
 function getCC(r){
   if(r.color_custom&&/^#[0-9A-Fa-f]{6}$/.test(r.color_custom))return null;
   const l=(r.lado||'').toUpperCase();
-  if(l==='NA')return 'c-negro';
-  if(l==='LH')return 'c-amarillo';
-  if(l==='RH')return 'c-verde';
+  if(l==='NA') return 'c-negro';
+  if(l==='LH') return 'c-amarillo';
+  if(l==='RH') return 'c-verde';
   return '';
 }
 function getCS(r){
@@ -512,108 +461,144 @@ function getCS(r){
   const br=(rv*299+g*587+b*114)/1000;
   return `background:${r.color_custom};color:${br>128?'#111':'#fff'};`;
 }
-function ca(r,base){
+function colorAttrs(r,base){
   const cls=getCC(r),sty=getCS(r);
-  if(sty)return `class="${base}" style="${sty}"`;
-  if(cls)return `class="${base} ${cls}"`;
+  if(sty) return `class="${base}" style="${sty}"`;
+  if(cls) return `class="${base} ${cls}"`;
   return `class="${base}"`;
 }
 
+/* ── BUILD JAMAITA HTML ── */
 function buildJ(r,arrVer,qrDivId){
-  const c4 = arrVer
-    ? `<div class="j-f4-arrows">${ARR[arrVer]}${ARR[arrVer]}${ARR[arrVer]}</div>`
-    : `<div class="j-f4">${r.ubicacion||''}</div>`;
 
-  const cliSrc = r.cliente?`${SB_URL}/storage/v1/object/public/${BKT_CLI}/${r.cliente}.png`:'';
-  const cliH = cliSrc
-    ?`<img src="${cliSrc}" alt="${r.cliente||''}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span class="j-cli7-txt" style="display:none">${r.cliente||''}</span>`
-    :`<span class="j-cli7-txt">${r.cliente||''}</span>`;
+  /* Campo 4 — ubicacion or arrows */
+  let campo4Html;
+  if(arrVer){
+    campo4Html=`<div class="cell-val loc-val arrows-mode" style="display:flex;align-items:center;justify-content:space-evenly;height:100%">
+      ${ARR[arrVer]}${ARR[arrVer]}${ARR[arrVer]}
+    </div>`;
+  } else {
+    campo4Html=`<div class="cell-val loc-val">${r.ubicacion||''}</div>`;
+  }
 
-  const prSrc = r.numero_parte?`${SB_URL}/storage/v1/object/public/${BKT_PROD}/${r.numero_parte}.JPG`:'';
-  const prH = prSrc
-    ?`<img src="${prSrc}" alt="${r.numero_parte||''}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span class="j-f11-ph" style="display:none">Sin imagen</span>`
-    :`<span class="j-f11-ph">Sin imagen</span>`;
+  /* Sebango (campo1) — top of c-part, colored by LADO */
+  const sebClass = getCC(r);
+  const sebStyle = getCS(r);
+  const sebAttrs  = sebStyle
+    ? `style="${sebStyle}"`
+    : sebClass ? `class="part-sebango ${sebClass}"` : `class="part-sebango"`;
+
+  /* campo3 (sebango cliente) — same color logic */
+  const cli3Attrs = colorAttrs(r,'c-seb-cli');
+
+  /* Cliente image (campo 7) */
+  const cliSrc = r.cliente
+    ? `${SB_URL}/storage/v1/object/public/${BKT_CLI}/${r.cliente}.png` : '';
+  const cliHtml = cliSrc
+    ? `<img src="${cliSrc}" alt="${r.cliente||''}"
+         onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+       <span class="cli-img-txt" style="display:none">${r.cliente||''}</span>`
+    : `<span class="cli-img-txt">${r.cliente||''}</span>`;
+
+  /* Producto image (campo 11) */
+  const prSrc = r.numero_parte
+    ? `${SB_URL}/storage/v1/object/public/${BKT_PROD}/${r.numero_parte}.JPG` : '';
+  const prHtml = prSrc
+    ? `<img src="${prSrc}" alt="${r.numero_parte||''}"
+         style="max-width:100%;max-height:100%;object-fit:contain;"
+         onerror="this.style.display='none';">`
+    : ``;
 
   return `
-  <div class="j-top">
-    <div>${c4}</div>
-    <div class="j-hcell">
-      <div class="j-hlbl">Empaque</div>
-      <div class="j-hval j-hval-emp">${r.tipo_caja||''}</div>
+  <!-- FILA 1: ubicacion | empaque | qpc | cliente-img -->
+  <div class="row-top">
+    <div class="c-loc">
+      <span class="cell-lbl">Ubicación</span>
+      ${campo4Html}
     </div>
-    <div class="j-hcell">
-      <div class="j-hlbl">QPC</div>
-      <div class="j-hval j-hval-qpc">${r.qpc??''}</div>
+    <div class="c-emp">
+      <span class="cell-lbl">Empaque</span>
+      <div class="cell-val emp-val">${r.tipo_caja||''}</div>
     </div>
-    <div class="j-hcell">
-      <div class="j-hlbl">Cliente</div>
-      <div class="j-cli7">${cliH}</div>
+    <div class="c-qpc">
+      <span class="cell-lbl">QPC</span>
+      <div class="cell-val qpc-val">${r.qpc??''}</div>
     </div>
-  </div>
-
-  <div class="j-mid">
-    <div class="j-vlbl-ktmex">KTMEX</div>
-    <div class="j-c12">
-      <div ${ca(r,'j-f1')}>${r.sebango||''}</div>
-      <div class="j-f2">${r.numero_parte||''}</div>
-    </div>
-    <div class="j-f11">${prH}</div>
-    <div class="j-qr-col">
-      <div class="j-qr-lbl">QR</div>
-      <div class="j-qr-img"><div id="${qrDivId}"></div></div>
+    <div class="c-cli-lbl">
+      <span class="cell-lbl">Cliente</span>
+      <div class="cli-img-wrap">${cliHtml}</div>
     </div>
   </div>
 
-  <div class="j-bot">
-    <div class="j-vlbl-cli">CLIENTE</div>
-    <div ${ca(r,'j-f3')}>${r.sebango_cliente||''}</div>
-    <div class="j-mmcell mn">
-      <div class="j-mm-spacer"></div>
-      <div class="j-mmlbl">Mínimo de cajas</div>
-      <div class="j-mmval">${r.minimo??''}</div>
+  <!-- FILA 2: KTMEX | sebango+numparte | imagen-producto | QR -->
+  <div class="row-mid">
+    <div class="c-ktmex">KTMEX</div>
+    <div class="c-part">
+      <div ${sebAttrs}>${r.sebango||''}</div>
+      <div class="part-numparte">${r.numero_parte||''}</div>
     </div>
-    <div class="j-mmcell mx">
-      <div class="j-mm-spacer"></div>
-      <div class="j-mmlbl">Máximo de cajas</div>
-      <div class="j-mmval">${r.maximo??''}</div>
+    <!-- imagen producto centrada -->
+    <div style="width:35%;border-left:2px solid #000;border-right:2px solid #000;display:flex;align-items:center;justify-content:center;padding:6px;overflow:hidden;">
+      ${prHtml}
+    </div>
+    <div class="c-qr">
+      <div class="qr-title">QR</div>
+      <div class="qr-div"><div id="${qrDivId}"></div></div>
+    </div>
+  </div>
+
+  <!-- FILA 3: CLIENTE | campo3 | min | max -->
+  <div class="row-bot">
+    <div class="c-cliente-lbl">CLIENTE</div>
+    <div ${cli3Attrs}>${r.sebango_cliente||''}</div>
+    <div class="c-mm">
+      <div class="mm-cell mn">
+        <div class="mm-lbl">Mínimo de cajas</div>
+        <div class="mm-val">${r.minimo??''}</div>
+      </div>
+      <div class="mm-cell mx">
+        <div class="mm-lbl">Máximo de cajas</div>
+        <div class="mm-val">${r.maximo??''}</div>
+      </div>
     </div>
   </div>`;
 }
 
+/* ── QR GENERATION ── */
 function makeQR(divId, text){
   const el = document.getElementById(divId);
-  if(!el)return;
-  el.innerHTML='';
+  if(!el) return;
+  el.innerHTML = '';
   try{
-    new QRCode(el,{
+    new QRCode(el, {
       text: text||'KTMEX',
-      width:110, height:110,
-      colorDark:'#000000',
-      colorLight:'#ffffff',
+      width: 100, height: 100,
+      colorDark:'#000000', colorLight:'#ffffff',
       correctLevel: QRCode.CorrectLevel.M
     });
     setTimeout(()=>{
-      const img=el.querySelector('img');
-      if(img){img.style.cssText='max-width:100%;max-height:110px;width:auto;height:auto;';}
-      const cv=el.querySelector('canvas');
-      if(cv){cv.style.cssText='max-width:100%;max-height:110px;';}
-    },50);
+      const img = el.querySelector('img');
+      if(img) img.style.cssText='max-width:100%;max-height:80px;width:auto;height:auto;';
+      const cv = el.querySelector('canvas');
+      if(cv) cv.style.cssText='max-width:100%;max-height:80px;';
+    }, 60);
   }catch(e){
-    el.innerHTML=`<div style="font-size:9px;color:#999;text-align:center">QR<br>${text}</div>`;
+    el.innerHTML=`<div style="font-size:8px;color:#999;text-align:center">QR<br>${text}</div>`;
   }
 }
 
+/* ── RENDER ── */
 function render(arrVer){
   load(true);
-  document.getElementById('j1').innerHTML=buildJ(rec,arrVer,'qrd1');
-  document.getElementById('j2').innerHTML=buildJ(rec,arrVer,'qrd2');
+  document.getElementById('j1').innerHTML = buildJ(rec, arrVer, 'qrd1');
+  document.getElementById('j2').innerHTML = buildJ(rec, arrVer, 'qrd2');
   load(false);
   goTo('jamaita');
   requestAnimationFrame(()=>{
     setTimeout(()=>{
-      makeQR('qrd1',rec.sebango||'KTMEX');
-      makeQR('qrd2',rec.sebango||'KTMEX');
-    },200);
+      makeQR('qrd1', rec.sebango||'KTMEX');
+      makeQR('qrd2', rec.sebango||'KTMEX');
+    }, 200);
   });
 }
 </script>
