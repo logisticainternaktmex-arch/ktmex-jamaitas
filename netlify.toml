@@ -1,0 +1,13 @@
+[build]
+  command = "echo done"
+  publish = "."
+
+[[redirects]]
+  from = "/admin"
+  to = "/admin.html"
+  status = 200
+
+[[redirects]]
+  from = "/jamaita"
+  to = "/jamaita.html"
+  status = 200
