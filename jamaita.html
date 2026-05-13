@@ -8,65 +8,24 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <style>
-/*
-  EXACT MEASUREMENTS FROM EXCEL (Jamaita_original.xlsx)
-  Total width: 930px (cols B-AE, 30 cols × ~31px default)
-
-  COLUMN SECTIONS:
-  campo4:   372px = 40.0%  (cols B-M,  12 cols)
-  empaque:  186px = 20.0%  (cols N-S,   6 cols)
-  qpc:      124px = 13.3%  (cols T-W,   4 cols)
-  cliente:  248px = 26.7%  (cols X-AE,  8 cols)
-
-  Within campo4 left section:
-  KTMEX/CLIENTE label: 31px (col B, 1 col)
-  campo1/2/3:         341px (cols C-M, 11 cols)
-
-  Within right section (cols N-AE = 558px):
-  campo11:  434px = 77.8% (cols N-AA, 14 cols)
-  QR:       124px = 22.2% (cols AB-AE, 4 cols)
-
-  Min/Max: 279px each = 50% of right section
-
-  ROW HEIGHTS (pts → px at 1pt=1.333px):
-  rows 3-4  (header):  37px
-  rows 5-7  (values):  63px   → TOP TOTAL: 100px
-  rows 8-14 (campo1): 126px
-  rows 15-18(campo2):  72px   → MID TOTAL: 198px
-  rows 19-25(campo3): 127px   → BOT TOTAL: 127px
-  GRAND TOTAL: 425px
-
-  FONT SIZES (Excel pts, converted to CSS):
-  campo1/3:  72pt Excel → ~96px CSS → use clamp(48px,8vw,96px)
-  campo2:    30pt Excel → ~40px CSS → use clamp(16px,3vw,36px)
-  headers:   20pt Excel → ~27px CSS → use clamp(11px,1.8vw,20px)
-  QR label:  20pt Excel → same
-  min/max label: 20pt
-  min/max val:   24pt → ~32px → use clamp(18px,2.5vw,30px)
-  KTMEX/CLIENTE: 11pt → ~15px
-*/
-
 :root{
   --black:#111;--blue:#3576ac;--muted:#888;
   --green:#00B050;--yellow:#FFC000;--red:#FF0000;--lime:#92D050;
+  --border:1.5px solid #111;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Barlow Condensed',sans-serif;background:#e0e0e0;min-height:100vh;}
+body{font-family:'Barlow Condensed',sans-serif;background:#d8d8d8;min-height:100vh;}
 
-/* ── HEADER ── */
-.app-hdr{
-  background:var(--black);color:white;padding:10px 20px;
-  display:flex;align-items:center;gap:12px;
-  border-bottom:3px solid var(--blue);
-}
+/* HEADER */
+.app-hdr{background:#111;color:white;padding:10px 20px;display:flex;align-items:center;gap:12px;border-bottom:3px solid var(--blue);}
 .hdr-brand{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;letter-spacing:3px;color:var(--blue);}
 .hdr-sub{font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;}
 
-/* ── PANELS ── */
+/* PANELS */
 .panel{display:none;}
 .panel.on{display:block;}
 
-/* ── SHARED CARD ── */
+/* CARD */
 .card{background:white;border-radius:8px;padding:36px;max-width:460px;margin:50px auto;box-shadow:0 8px 32px rgba(0,0,0,.13);}
 .card h2{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:700;text-align:center;margin-bottom:6px;color:#111;}
 .card .sub{text-align:center;color:#666;font-size:13px;margin-bottom:26px;}
@@ -80,8 +39,6 @@ body{font-family:'Barlow Condensed',sans-serif;background:#e0e0e0;min-height:100
 .btn-green:disabled{background:#ccc;cursor:not-allowed;}
 .btn-back{background:none;border:none;color:#888;cursor:pointer;font-size:13px;text-decoration:underline;display:block;margin-top:16px;width:100%;text-align:center;}
 .err{color:#e74c3c;font-size:13px;text-align:center;margin-top:10px;display:none;}
-
-/* ── MODE ── */
 .mode-seb{text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:38px;font-weight:900;color:var(--blue);letter-spacing:3px;margin-bottom:4px;}
 .mode-info{text-align:center;color:#555;font-size:13px;margin-bottom:24px;}
 .mode-q{text-align:center;font-weight:700;font-size:15px;color:#111;margin-bottom:16px;}
@@ -91,8 +48,6 @@ body{font-family:'Barlow Condensed',sans-serif;background:#e0e0e0;min-height:100
 .mode-btn .mi{font-size:32px;margin-bottom:8px;}
 .mode-btn .mn{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:#111;letter-spacing:1px;}
 .mode-btn .mh{font-size:12px;color:#666;margin-top:4px;}
-
-/* ── ARROW SELECTION ── */
 .arrow-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;}
 .ao{border:3px solid #ddd;border-radius:8px;padding:16px 10px;cursor:pointer;background:white;transition:all .2s;text-align:center;}
 .ao:hover{border-color:var(--blue);}
@@ -100,220 +55,217 @@ body{font-family:'Barlow Condensed',sans-serif;background:#e0e0e0;min-height:100
 .ao svg{width:70px;height:70px;display:block;margin:0 auto 8px;}
 .ao .al{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;color:#111;}
 
-/* ── TOOLBAR ── */
-.j-bar{max-width:960px;margin:0 auto 14px;padding:0 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+/* TOOLBAR */
+.j-bar{max-width:980px;margin:0 auto 12px;padding:0 16px;display:flex;gap:10px;flex-wrap:wrap;}
 .tbtn{background:var(--blue);color:white;border:none;border-radius:4px;padding:9px 18px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;}
 .tbtn.dk{background:#333;}
 
-/* ══════════════════════════════════════════════
-   JAMAITA — PIXEL-PERFECT FROM EXCEL ORIGINAL
-   Total: 930px wide × 425px tall
-══════════════════════════════════════════════ */
-.j-sheet{padding:10px 16px;}
-.j-pair{display:flex;flex-direction:column;gap:14px;max-width:960px;margin:0 auto;}
-.j-wrap{width:100%;}
+/* ══════════════════════════════════════════════════════
+   JAMAITA — EXACT EXCEL PROPORTIONS
+   
+   Total width reference: 930px (30 cols × ~31px)
+   
+   HORIZONTAL SECTIONS:
+   ┌──────────────────────────────────────────────────────────────────────────┐
+   │  campo4 40% (cols B-M=12)  │ emp 20% │ qpc 13.3% │ cliente 26.7%       │
+   ├──────────────────────────────────────────────────────────────────────────┤
+   │KTMEX│  campo1 36.7% (C-M)  │  campo11 46.7% (N-AA)   │  QR 13.3%(AB-AE)│
+   │lbl  ├──────────────────────┤                          │                 │
+   │31px │  campo2 36.7%        │                          │                 │
+   ├──────────────────────────────────────────────────────────────────────────┤
+   │CLI  │  campo3 36.7%        │   min 30% (N-V)    │  max 30% (W-AE)      │
+   └──────────────────────────────────────────────────────────────────────────┘
+   
+   VERTICAL HEIGHTS (px):
+   top row:  100px (rows 3-7)
+   mid row:  198px (rows 8-18: campo1=126px, campo2=72px)
+   bot row:  127px (rows 19-25)
+   TOTAL:    425px
+══════════════════════════════════════════════════════ */
 
+.j-sheet{padding:10px 16px 20px;}
+.j-pair{display:flex;flex-direction:column;gap:16px;max-width:980px;margin:0 auto;}
+
+/* The jamaita outer box */
 .jamaita{
   background:white;
-  border:1px solid #111;
+  border:var(--border);
   width:100%;
   font-family:'Barlow Condensed',sans-serif;
-  table-layout:fixed;
+  overflow:hidden;
 }
 
-/* ─── ROW 1: TOP (campo4 | empaque | qpc | cliente) ───
-   Heights: rows3-4=37px header + rows5-7=63px value = 100px total
-   But campo4 spans all 5 rows (3-7) = 100px
-   Empaque/QPC/Cliente split: top label (37px) + bottom value (63px)
-*/
+/* ── TOP ROW: 100px ── */
 .j-top{
   display:grid;
-  /* 40% | 20% | 13.3% | 26.7% */
-  grid-template-columns: 40fr 20fr 13.3fr 26.7fr;
+  grid-template-columns: 40% 20% 13.3% 26.7%;
   height:100px;
-  border-bottom:1px solid #111;
+  border-bottom:var(--border);
 }
-.j-top > div { border-right:1px solid #111; }
-.j-top > div:last-child { border-right:none; }
+/* All top children get right border except last */
+.j-top > *{border-right:var(--border);}
+.j-top > *:last-child{border-right:none;}
 
-/* Campo 4 — full height, centered */
+/* campo 4 — ubicacion text */
 .j-f4{
   display:flex;align-items:center;justify-content:center;
   padding:6px 10px;text-align:center;
-  font-size:clamp(18px,3.5vw,42px);font-weight:900;
+  font-size:clamp(16px,3vw,38px);font-weight:900;
   height:100%;word-break:break-word;
 }
-/* Campo 4 arrows — 3 arrows spread */
+/* campo 4 — 3 arrows */
 .j-f4-arrows{
   display:flex;align-items:center;justify-content:space-evenly;
   padding:4px 8px;height:100%;
 }
 
-/* Header cells (empaque/qpc/cliente) split into label+value */
-.j-hcell{display:grid;grid-template-rows:37px 63px;}
+/* Empaque / QPC / Cliente cells */
+.j-hcell{
+  display:grid;
+  grid-template-rows:37px 63px;  /* header=37px, value=63px */
+}
 .j-hlbl{
-  /* font-size 20pt Excel = ~20px CSS for label text */
-  font-size:clamp(10px,1.5vw,16px);font-weight:400;
-  color:#111;text-align:center;
+  font-size:clamp(10px,1.4vw,15px);font-weight:400;color:#111;
+  text-align:center;
   display:flex;align-items:center;justify-content:center;
-  border-bottom:1px solid #111;padding:0 4px;
+  border-bottom:var(--border);padding:2px 4px;
 }
 .j-hval{
-  /* values: same size as label area */
   font-size:clamp(14px,2.2vw,26px);font-weight:700;
   display:flex;align-items:center;justify-content:center;
-  text-align:center;padding:0 4px;
+  text-align:center;padding:2px 4px;
 }
-/* Cliente image cell */
+/* Cliente image */
 .j-cli7{
   display:flex;align-items:center;justify-content:center;
   height:63px;padding:4px 6px;
 }
 .j-cli7 img{max-height:52px;max-width:100%;object-fit:contain;}
-.j-cli7-txt{font-size:clamp(10px,1.6vw,18px);font-weight:700;color:#111;text-align:center;}
+.j-cli7-txt{font-size:clamp(10px,1.5vw,18px);font-weight:700;color:#111;text-align:center;}
 
-/* ─── ROW 2: MID (KTMEX | campo1+2 | campo11 | QR) ───
-   Heights: campo1=126px (rows8-14) + campo2=72px (rows15-18) = 198px
-   KTMEX label: 198px tall, 31px wide
-   campo1: 126px tall
-   campo2: 72px tall
-   campo11: 198px full height (rows 8-21 = 198px)
-   QR top (AB8:AE10 = rows8-10 = ~40px): "QR" label
-   QR img (AB11:AE21 = rows11-21 = ~147px): QR canvas
-*/
+/* ── MID ROW: 198px ── */
 .j-mid{
   display:grid;
-  /* KTMEX(31px) | campo1+2(341px) | campo11(434px) | QR(124px) */
-  grid-template-columns: 31px 341fr 434fr 124px;
+  /* KTMEX(31px fixed) | campo1+2 | campo11 | QR */
+  /* Remaining 3 cols share (100%-31px): 341/899=37.9% | 434/899=48.3% | 124/899=13.8% */
+  grid-template-columns: 31px calc((100% - 31px) * 341/899) calc((100% - 31px) * 434/899) calc((100% - 31px) * 124/899);
   height:198px;
-  border-bottom:1px solid #111;
-}
-/* Responsive version using fractions */
-.j-mid{
-  grid-template-columns: 31px calc(341/930 * 100%) calc(434/930 * 100%) calc(124/930 * 100%);
+  border-bottom:var(--border);
 }
 
-.j-vlbl-ktmex{
+/* KTMEX vertical label */
+.j-vlbl{
   writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg);
   font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
-  background:white;border-right:1px solid #111;
+  background:white;
+  border-right:var(--border);
   display:flex;align-items:center;justify-content:center;
   white-space:nowrap;color:#111;
-  grid-row:1;
 }
 
-/* campo1 + campo2 stacked */
+/* campo1 + campo2 */
 .j-c12{
   display:grid;
   grid-template-rows:126px 72px;
-  border-right:1px solid #111;
+  border-right:var(--border);
 }
 .j-f1{
-  /* font-size 72pt Excel. In CSS at screen: use large clamp */
-  font-size:clamp(32px,6vw,80px);font-weight:900;
+  font-size:clamp(30px,5.5vw,76px);font-weight:900;
   display:flex;align-items:center;justify-content:center;
   text-align:center;padding:4px 8px;
-  border-bottom:1px solid #111;
-  word-break:break-word;
+  border-bottom:var(--border);
+  word-break:break-word;overflow:hidden;
   transition:background .2s,color .2s;
-  overflow:hidden;
 }
 .j-f2{
-  /* font-size 30pt Excel */
-  font-size:clamp(11px,2vw,22px);font-weight:700;
+  font-size:clamp(11px,1.8vw,20px);font-weight:700;
   display:flex;align-items:center;justify-content:center;
   text-align:center;padding:4px 8px;
   word-break:break-all;overflow:hidden;
 }
 
-/* campo11 — product image, full 198px */
+/* campo11 — product image */
 .j-f11{
   display:flex;align-items:center;justify-content:center;
-  border-right:1px solid #111;
+  border-right:var(--border);
   padding:8px;overflow:hidden;
 }
 .j-f11 img{max-width:100%;max-height:182px;object-fit:contain;}
-.j-f11-ph{color:#ccc;font-size:13px;text-align:center;}
+.j-f11-ph{color:#ccc;font-size:12px;text-align:center;}
 
-/* QR column: split label(~40px) + canvas(~158px) */
+/* QR column — INSIDE the jamaita border */
 .j-qr-col{
   display:grid;
   grid-template-rows:40px 1fr auto;
+  overflow:hidden;
 }
 .j-qr-lbl{
-  /* "QR" — 20pt Excel = bold, centered */
-  font-size:clamp(12px,1.8vw,20px);font-weight:700;
+  font-size:clamp(11px,1.6vw,18px);font-weight:700;
   display:flex;align-items:center;justify-content:center;
-  border-bottom:1px solid #111;color:#111;
+  border-bottom:var(--border);color:#111;
+  background:white;
 }
 .j-qr-img{
   display:flex;align-items:center;justify-content:center;
-  padding:4px 2px;
+  padding:4px 2px;overflow:hidden;
 }
-.j-qr-sub{
+/* Make canvas fit inside the QR column */
+.j-qr-img canvas{
+  max-width:100%!important;
+  max-height:120px!important;
+  width:auto!important;
+  height:auto!important;
+}
+.j-qr-num{
   font-size:8px;color:#555;text-align:center;
-  padding:2px 2px 4px;word-break:break-all;letter-spacing:.5px;
+  padding:2px 2px 4px;word-break:break-all;
+  border-top:var(--border);
 }
 
-/* ─── ROW 3: BOT (CLIENTE | campo3 | min | max) ───
-   Height: rows19-25 = 127px total
-   CLIENTE label: 31px wide, 127px tall
-   campo3: 341px wide, 127px tall (rows19-25, cols C-M)
-   min label (N22:V23) + min val (N24:V25): right of campo3
-   max label (W22:AE23) + max val (W24:AE25): rightmost
-   min/max each = 279px = 30% of total
-*/
+/* ── BOT ROW: 127px ── */
 .j-bot{
   display:grid;
-  grid-template-columns: 31px calc(341/930 * 100%) calc(279/930 * 100%) calc(279/930 * 100%);
+  /* CLIENTE(31px) | campo3 | min | max */
+  grid-template-columns: 31px calc((100% - 31px) * 341/899) calc((100% - 31px) * 279/899) calc((100% - 31px) * 279/899);
   height:127px;
 }
-.j-vlbl-cli{
-  writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg);
-  font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
-  background:white;border-right:1px solid #111;
-  display:flex;align-items:center;justify-content:center;
-  white-space:nowrap;color:#111;
-}
+/* Note: 341+279+279=899 ✓ */
+
 .j-f3{
-  /* font-size 72pt Excel */
-  font-size:clamp(28px,5vw,72px);font-weight:900;
+  font-size:clamp(24px,4.5vw,68px);font-weight:900;
   display:flex;align-items:center;justify-content:center;
   text-align:center;padding:4px 8px;
-  border-right:1px solid #111;
+  border-right:var(--border);
   word-break:break-word;overflow:hidden;
   transition:background .2s,color .2s;
 }
 
-/* Min/Max cells — each split label + value */
+/* Min / Max */
 .j-mmcell{
   display:grid;
   grid-template-rows:auto 1fr;
   overflow:hidden;
 }
-.j-mmcell.mn{border-right:1px solid #111;}
+.j-mmcell.mn{border-right:var(--border);}
 .j-mmlbl{
-  /* 20pt Excel */
-  font-size:clamp(8px,1.2vw,14px);font-weight:400;
+  font-size:clamp(8px,1.1vw,13px);font-weight:400;
   display:flex;align-items:center;justify-content:center;
-  text-align:center;padding:4px 4px;
-  border-bottom:1px solid #111;
+  text-align:center;padding:5px 4px;
+  border-bottom:var(--border);
 }
 .j-mmval{
-  /* 24pt Excel */
-  font-size:clamp(20px,3.5vw,40px);font-weight:900;
+  font-size:clamp(20px,3.5vw,42px);font-weight:900;
   display:flex;align-items:center;justify-content:center;
 }
-/* Colors */
 .j-mmcell.mn .j-mmlbl,.j-mmcell.mn .j-mmval{background:var(--red);color:white;}
 .j-mmcell.mx .j-mmlbl,.j-mmcell.mx .j-mmval{background:var(--lime);color:#111;}
 
-/* ── COLOR COMBINATIONS ── */
+/* COLOR COMBOS */
 .c-negro   {background:#222!important;color:white!important;}
 .c-amarillo{background:var(--yellow)!important;color:#111!important;}
 .c-verde   {background:var(--green)!important;color:white!important;}
 
-/* ── PRINT — 2 jamaitas per A4/Letter page ── */
+/* PRINT — 2 per page */
 @media print{
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
   body{background:white!important;margin:0;padding:0;}
@@ -322,20 +274,15 @@ body{font-family:'Barlow Condensed',sans-serif;background:#e0e0e0;min-height:100
   .j-sheet{padding:4mm;}
   .j-pair{
     gap:4mm;max-width:100%;margin:0;
-    height:calc(297mm - 16mm); /* A4 */
+    height:calc(297mm - 16mm);
     display:grid;grid-template-rows:1fr 1fr;
     page-break-after:always;
   }
   .j-wrap{height:100%;display:flex;flex-direction:column;}
-  .jamaita{
-    flex:1;border:0.5pt solid #111;
-    /* Override fixed heights for print scaling */
-  }
-  .j-top{height:auto;min-height:0;flex:0 0 20%;}
-  .j-mid{height:auto;min-height:0;flex:0 0 46%;}
-  .j-bot{height:auto;min-height:0;flex:0 0 30%;}
-  .jamaita{display:flex;flex-direction:column;}
-  /* Force colors */
+  .jamaita{flex:1;border:0.75pt solid #111;display:flex;flex-direction:column;}
+  .j-top{height:auto;flex:0 0 20%;min-height:0;}
+  .j-mid{height:auto;flex:1;min-height:0;}
+  .j-bot{height:auto;flex:0 0 28%;min-height:0;}
   .c-negro{background:#222!important;color:white!important;}
   .c-amarillo{background:#FFC000!important;color:#111!important;}
   .c-verde{background:#00B050!important;color:white!important;}
@@ -343,7 +290,7 @@ body{font-family:'Barlow Condensed',sans-serif;background:#e0e0e0;min-height:100
   .j-mmcell.mx .j-mmlbl,.j-mmcell.mx .j-mmval{background:#92D050!important;color:#111!important;}
 }
 
-/* ── LOADING ── */
+/* LOADING */
 .lov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;align-items:center;justify-content:center;}
 .lov.on{display:flex;}
 .lbox{background:white;border-radius:8px;padding:30px 40px;text-align:center;}
@@ -445,46 +392,31 @@ body{font-family:'Barlow Condensed',sans-serif;background:#e0e0e0;min-height:100
 </div>
 
 <script>
-/* ── CONFIG ── */
 const SB_URL   = 'https://zmcogptrdmgneblvvtox.supabase.co';
 const SB_KEY   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptY29ncHRyZG1nbmVibHZ2dG94Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMDQ0ODksImV4cCI6MjA4OTg4MDQ4OX0.rT8fe3wRfsx6pa3JP9HyMuIguhQICpOlJFgccmMfBrg';
 const TBL      = 'jamaitas_bd';
 const BKT_CLI  = 'jamaitas-clientes';
 const BKT_PROD = 'jamaitas-productos';
 
-/* Arrow SVGs for inside the jamaita campo4 (3 distributed) */
+/* 3 copies of selected arrow for campo4 */
 const ARR = {
-  /* UP */
-  1: `<svg viewBox="0 0 50 70" width="44" height="62"><polygon points="25,2 48,68 25,52 2,68" fill="#111"/></svg>`,
-  /* DOWN */
-  2: `<svg viewBox="0 0 50 70" width="44" height="62"><polygon points="25,68 48,2 25,18 2,2" fill="#111"/></svg>`,
-  /* LEFT */
-  3: `<svg viewBox="0 0 70 50" width="62" height="44"><polygon points="2,25 68,2 52,25 68,48" fill="#111"/></svg>`,
-  /* RIGHT */
-  4: `<svg viewBox="0 0 70 50" width="62" height="44"><polygon points="68,25 2,2 18,25 2,48" fill="#111"/></svg>`,
+  1:`<svg viewBox="0 0 50 70" width="42" height="58"><polygon points="25,2 48,68 25,52 2,68" fill="#111"/></svg>`,
+  2:`<svg viewBox="0 0 50 70" width="42" height="58"><polygon points="25,68 48,2 25,18 2,2" fill="#111"/></svg>`,
+  3:`<svg viewBox="0 0 70 50" width="58" height="42"><polygon points="2,25 68,2 52,25 68,48" fill="#111"/></svg>`,
+  4:`<svg viewBox="0 0 70 50" width="58" height="42"><polygon points="68,25 2,2 18,25 2,48" fill="#111"/></svg>`,
 };
 
 let db, rec, arw;
 window.onload = () => { db = window.supabase.createClient(SB_URL, SB_KEY); };
 
-/* ── NAV ── */
 function goTo(p){
   document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));
   document.getElementById(p+'-panel').classList.add('on');
-  if(p==='search'){
-    rec=arw=null;
-    document.getElementById('seb').value='';
-    document.getElementById('err').style.display='none';
-  }
-  if(p==='arrow'){
-    [1,2,3,4].forEach(i=>document.getElementById('ao'+i).className='ao');
-    document.getElementById('btnok').disabled=true;
-    arw=null;
-  }
+  if(p==='search'){rec=arw=null;document.getElementById('seb').value='';document.getElementById('err').style.display='none';}
+  if(p==='arrow'){[1,2,3,4].forEach(i=>document.getElementById('ao'+i).className='ao');document.getElementById('btnok').disabled=true;arw=null;}
 }
 function load(v){document.getElementById('loader').className='lov'+(v?' on':'');}
 
-/* ── SEARCH ── */
 async function buscar(){
   const s=document.getElementById('seb').value.trim();
   if(!s)return;
@@ -493,20 +425,15 @@ async function buscar(){
   load(true);
   const{data,error}=await db.from(TBL).select('*').ilike('sebango',s).maybeSingle();
   load(false);
-  if(error||!data){
-    e.textContent=`No se encontró "${s}". Verifica el número.`;
-    e.style.display='block';return;
-  }
+  if(error||!data){e.textContent=`No se encontró "${s}". Verifica el número.`;e.style.display='block';return;}
   rec=data;
   document.getElementById('mseb').textContent=rec.sebango;
   document.getElementById('minfo').textContent=`${rec.numero_parte||''} · ${rec.cliente||''} · LADO: ${rec.lado||''}`;
   goTo('mode');
 }
 
-/* ── MODE ── */
 function selMode(m){if(m==='ubicacion')render(null);else goTo('arrow');}
 
-/* ── ARROWS ── */
 function pickA(n){
   arw=n;
   [1,2,3,4].forEach(i=>document.getElementById('ao'+i).className='ao'+(i===n?' sel':''));
@@ -514,13 +441,13 @@ function pickA(n){
 }
 function okArrow(){if(arw)render(arw);}
 
-/* ── COLOR LOGIC ── */
+/* Color logic */
 function getCC(r){
   if(r.color_custom&&/^#[0-9A-Fa-f]{6}$/.test(r.color_custom))return null;
   const l=(r.lado||'').toUpperCase();
-  if(l==='NA') return 'c-negro';
-  if(l==='LH') return 'c-amarillo';
-  if(l==='RH') return 'c-verde';
+  if(l==='NA')return 'c-negro';
+  if(l==='LH')return 'c-amarillo';
+  if(l==='RH')return 'c-verde';
   return '';
 }
 function getCS(r){
@@ -532,40 +459,31 @@ function getCS(r){
 }
 function ca(r,base){
   const cls=getCC(r),sty=getCS(r);
-  if(sty) return `class="${base}" style="${sty}"`;
-  if(cls) return `class="${base} ${cls}"`;
+  if(sty)return `class="${base}" style="${sty}"`;
+  if(cls)return `class="${base} ${cls}"`;
   return `class="${base}"`;
 }
 
-/* ── BUILD JAMAITA HTML ── */
+/* Build jamaita HTML */
 function buildJ(r,arrVer,qrId){
-  /* Campo 4 content */
-  let c4;
-  if(arrVer){
-    /* 3 arrows distributed with space-evenly */
-    c4=`<div class="j-f4-arrows">${ARR[arrVer]}${ARR[arrVer]}${ARR[arrVer]}</div>`;
-  } else {
-    c4=`<div class="j-f4">${r.ubicacion||''}</div>`;
-  }
+  /* Campo 4 */
+  const c4 = arrVer
+    ? `<div class="j-f4-arrows">${ARR[arrVer]}${ARR[arrVer]}${ARR[arrVer]}</div>`
+    : `<div class="j-f4">${r.ubicacion||''}</div>`;
 
-  /* Cliente image (campo 7) */
+  /* Cliente img */
   const cliSrc = r.cliente ? `${SB_URL}/storage/v1/object/public/${BKT_CLI}/${r.cliente}.png` : '';
   const cliH = cliSrc
-    ? `<img src="${cliSrc}" alt="${r.cliente||''}"
-         onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
-       <span class="j-cli7-txt" style="display:none">${r.cliente||''}</span>`
+    ? `<img src="${cliSrc}" alt="${r.cliente||''}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span class="j-cli7-txt" style="display:none">${r.cliente||''}</span>`
     : `<span class="j-cli7-txt">${r.cliente||''}</span>`;
 
-  /* Producto image (campo 11) */
+  /* Producto img */
   const prSrc = r.numero_parte ? `${SB_URL}/storage/v1/object/public/${BKT_PROD}/${r.numero_parte}.JPG` : '';
   const prH = prSrc
-    ? `<img src="${prSrc}" alt="${r.numero_parte||''}"
-         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-       <span class="j-f11-ph" style="display:none">Sin imagen</span>`
+    ? `<img src="${prSrc}" alt="${r.numero_parte||''}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span class="j-f11-ph" style="display:none">Sin imagen</span>`
     : `<span class="j-f11-ph">Sin imagen</span>`;
 
   return `
-  <!-- TOP: campo4 | empaque | qpc | cliente -->
   <div class="j-top">
     <div>${c4}</div>
     <div class="j-hcell">
@@ -574,7 +492,7 @@ function buildJ(r,arrVer,qrId){
     </div>
     <div class="j-hcell">
       <div class="j-hlbl">QPC</div>
-      <div class="j-hval" style="font-size:clamp(18px,3vw,36px);font-weight:900">${r.qpc??''}</div>
+      <div class="j-hval" style="font-size:clamp(18px,3vw,38px);font-weight:900">${r.qpc??''}</div>
     </div>
     <div class="j-hcell">
       <div class="j-hlbl">Cliente</div>
@@ -582,9 +500,8 @@ function buildJ(r,arrVer,qrId){
     </div>
   </div>
 
-  <!-- MID: KTMEX | campo1+2 | campo11 | QR -->
   <div class="j-mid">
-    <div class="j-vlbl-ktmex">KTMEX</div>
+    <div class="j-vlbl">KTMEX</div>
     <div class="j-c12">
       <div ${ca(r,'j-f1')}>${r.sebango||''}</div>
       <div class="j-f2">${r.numero_parte||''}</div>
@@ -593,13 +510,12 @@ function buildJ(r,arrVer,qrId){
     <div class="j-qr-col">
       <div class="j-qr-lbl">QR</div>
       <div class="j-qr-img"><canvas id="${qrId}"></canvas></div>
-      <div class="j-qr-sub">${r.sebango||''}</div>
+      <div class="j-qr-num">${r.sebango||''}</div>
     </div>
   </div>
 
-  <!-- BOT: CLIENTE | campo3 | min | max -->
   <div class="j-bot">
-    <div class="j-vlbl-cli">CLIENTE</div>
+    <div class="j-vlbl">CLIENTE</div>
     <div ${ca(r,'j-f3')}>${r.sebango_cliente||''}</div>
     <div class="j-mmcell mn">
       <div class="j-mmlbl">Mínimo de cajas</div>
@@ -612,29 +528,34 @@ function buildJ(r,arrVer,qrId){
   </div>`;
 }
 
-/* ── QR GENERATION ── */
-function makeQR(id,text){
-  const c=document.getElementById(id);
-  if(!c)return;
+/* QR — calculate size to fit inside the column */
+function makeQR(id, text){
+  const canvas = document.getElementById(id);
+  if(!canvas) return;
+  /* Get the actual width of the QR column container */
+  const col = canvas.closest('.j-qr-col');
+  const w = col ? Math.min(col.offsetWidth - 8, 110) : 100;
   try{
-    QRCode.toCanvas(c,text||'KTMEX',
-      {width:100,margin:1,color:{dark:'#000000',light:'#ffffff'}},
-      err=>{if(err)console.warn('QR:',err);});
-  }catch(e){console.warn(e);}
+    QRCode.toCanvas(canvas, text||'KTMEX', {
+      width: w,
+      margin: 1,
+      color:{dark:'#000000',light:'#ffffff'}
+    }, err => { if(err) console.warn('QR error:', err); });
+  } catch(e){ console.warn(e); }
 }
 
-/* ── RENDER ── */
 function render(arrVer){
   load(true);
-  document.getElementById('j1').innerHTML=buildJ(rec,arrVer,'qr1');
-  document.getElementById('j2').innerHTML=buildJ(rec,arrVer,'qr2');
+  document.getElementById('j1').innerHTML = buildJ(rec, arrVer, 'qr1');
+  document.getElementById('j2').innerHTML = buildJ(rec, arrVer, 'qr2');
   load(false);
   goTo('jamaita');
-  requestAnimationFrame(()=>{
-    setTimeout(()=>{
-      makeQR('qr1',rec.sebango||'KTMEX');
-      makeQR('qr2',rec.sebango||'KTMEX');
-    },80);
+  /* Generate QR after DOM is fully painted */
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      makeQR('qr1', rec.sebango || 'KTMEX');
+      makeQR('qr2', rec.sebango || 'KTMEX');
+    }, 150);
   });
 }
 </script>
