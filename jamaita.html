@@ -613,27 +613,28 @@ function buildJamaita(r,arrVer,canvasId){
   </div>`;
 }
 
-async function genQR(id,text){
-  return new Promise(res=>{
-    setTimeout(()=>{
-      const c=document.getElementById(id);
-      if(!c){res();return;}
-      QRCode.toCanvas(c,text||'KTMEX',
-        {width:76,margin:1,color:{dark:'#000000',light:'#ffffff'}},
-        ()=>res());
-    },150);
-  });
+function genQR(id,text){
+  const c=document.getElementById(id);
+  if(!c)return;
+  try{
+    QRCode.toCanvas(c,text||'KTMEX',
+      {width:76,margin:1,color:{dark:'#000000',light:'#ffffff'}},
+      ()=>{});
+  }catch(e){console.warn('QR error:',e);}
 }
 
 /* ── RENDER ── */
-async function render(arrVer){
+function render(arrVer){
   load(true);
   document.getElementById('j1').innerHTML = buildJamaita(rec,arrVer,'qr1');
   document.getElementById('j2').innerHTML = buildJamaita(rec,arrVer,'qr2');
-  await genQR('qr1', rec.sebango||'KTMEX');
-  await genQR('qr2', rec.sebango||'KTMEX');
   load(false);
   goTo('jamaita');
+  /* QR after panel is visible */
+  setTimeout(()=>{
+    genQR('qr1', rec.sebango||'KTMEX');
+    genQR('qr2', rec.sebango||'KTMEX');
+  },200);
 }
 </script>
 </body>
