@@ -768,100 +768,136 @@ async function importExcel(input) {
   reader.onload = async (e) => {
     try {
       const data = new Uint8Array(e.target.result);
-      const wb = XLSX.read(data, { type: 'array' });
+      // cellFormula:false + cellNF:false → use raw cached values, not formulas
+      const wb = XLSX.read(data, { type: 'array', cellFormula: false, cellNF: false, raw: false });
       const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
 
-      if (!rows.length) {
-        finishProgress('El archivo está vacío o no tiene datos.');
+      // Convert to array of arrays (not objects) so we control which row = headers
+      const allRows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', blankrows: false, raw: false });
+
+      // Find the header row — it contains 'SEBANGO'
+      let headerRowIdx = -1;
+      for (let i = 0; i < allRows.length; i++) {
+        const row = allRows[i];
+        if (row.some(c => String(c).trim().toUpperCase() === 'SEBANGO')) {
+          headerRowIdx = i;
+          break;
+        }
+      }
+
+      if (headerRowIdx === -1) {
+        finishProgress('No se encontró fila de encabezados con "SEBANGO". Verifica el archivo.');
         return;
       }
 
-      updateProgress(0, rows.length, `${rows.length} filas encontradas. Procesando...`);
+      const headers = allRows[headerRowIdx].map(h => String(h).trim());
+      updateProgress(0, 1, `Encabezados encontrados en fila ${headerRowIdx + 1}: ${headers.filter(Boolean).join(', ')}`);
 
-      // Map column names — supports both Spanish headers and English
-      // Expected columns (case-insensitive, flexible matching):
-      const colMap = (row) => ({
-        sebango:              findCol(row, ['SEBANGO','sebango']),
-        numero_parte:         findCol(row, ['Numero de parte','NUMERO DE PARTE','numero_parte','NumeroParte']),
-        sebango_cliente:      findCol(row, ['SEBANGO CLIENTE','sebango_cliente','SebangoCliente']),
-        ubicacion:            findCol(row, ['UBICACIÓN','UBICACION','ubicacion']),
-        tipo_caja:            findCol(row, ['TIPO DE CAJA','tipo_caja','TipoCaja','Empaque']),
-        qpc:                  findCol(row, ['QPC','qpc']),
-        lado:                 findCol(row, ['LADO','lado']),
-        cliente:              findCol(row, ['CLIENTE','cliente']),
-        minimo:               findCol(row, ['MINIMO','MÍNIMO','minimo','Minimo de cajas']),
-        maximo:               findCol(row, ['MAXIMO','MÁXIMO','maximo','Maximo de cajas']),
-        color_custom:         findCol(row, ['color_custom','COLOR','color']),
-        cajas_por_ubicacion:  findCol(row, ['# DE CAJAS POR UBICACIÓN','cajas_por_ubicacion','CajasPorUbicacion']),
-        piezas_por_ubicacion: findCol(row, ['PIEZAS TOTALES POR UBICACIÓN','piezas_por_ubicacion']),
-        num_ubicaciones:      findCol(row, ['# DE UBICACIONES','num_ubicaciones']),
-        total_piezas:         findCol(row, ['TOTAL DE PIEZAS','total_piezas']),
+      // Map header names to column indices
+      const idx = (names) => {
+        for (const name of names) {
+          const i = headers.findIndex(h => h.toUpperCase() === name.toUpperCase());
+          if (i !== -1) return i;
+        }
+        return -1;
+      };
+
+      const COL = {
+        sebango:              idx(['SEBANGO']),
+        numero_parte:         idx(['Numero de parte','NUMERO DE PARTE','NUMERO_PARTE']),
+        sebango_cliente:      idx(['SEBANGO CLIENTE','SEBANGO_CLIENTE']),
+        ubicacion:            idx(['UBICACIÓN','UBICACION']),
+        tipo_caja:            idx(['TIPO DE CAJA','TIPO_DE_CAJA']),
+        qpc:                  idx(['QPC']),
+        lado:                 idx(['LADO']),
+        cliente:              idx(['CLIENTE']),
+        minimo:               idx(['MINIMO','MÍNIMO']),
+        maximo:               idx(['MAXIMO','MÁXIMO']),
+        cajas_por_ubicacion:  idx(['# DE CAJAS POR UBICACIÓN','CAJAS POR UBICACION']),
+        piezas_por_ubicacion: idx(['PIEZAS TOTALES POR UBICACIÓN','PIEZAS POR UBICACION']),
+        num_ubicaciones:      idx(['# DE UBICACIONES','NUM_UBICACIONES']),
+        total_piezas:         idx(['TOTAL DE PIEZAS ','TOTAL DE PIEZAS','TOTAL_DE_PIEZAS']),
+      };
+
+      updateProgress(0, 1, `Columna SEBANGO en índice ${COL.sebango}, Nº Parte en ${COL.numero_parte}, LADO en ${COL.lado}`);
+
+      // Data rows start after the header row, skip empty rows
+      const dataRows = allRows.slice(headerRowIdx + 1).filter(row => {
+        const seb = COL.sebango >= 0 ? String(row[COL.sebango] || '').trim() : '';
+        return seb.length > 0 && seb !== 'SEBANGO';
       });
 
-      let inserted = 0, updated = 0, errors = 0;
+      if (!dataRows.length) {
+        finishProgress('No se encontraron filas de datos después de los encabezados.');
+        return;
+      }
 
-      for (let i = 0; i < rows.length; i++) {
-        const row = rows[i];
-        const mapped = colMap(row);
+      updateProgress(0, dataRows.length, `${dataRows.length} registros encontrados. Importando...`);
 
-        if (!mapped.sebango || !mapped.numero_parte) {
-          updateProgress(i + 1, rows.length, `⚠ Fila ${i + 2}: sin Sebango o Nº Parte — omitida`);
+      const getVal = (row, colIdx) => {
+        if (colIdx < 0 || colIdx >= row.length) return '';
+        const v = row[colIdx];
+        if (v === null || v === undefined) return '';
+        const s = String(v).trim();
+        // Skip formula strings that weren't evaluated
+        if (s.startsWith('=') || s === '-') return '';
+        return s;
+      };
+
+      let inserted = 0, errors = 0;
+
+      for (let i = 0; i < dataRows.length; i++) {
+        const row = dataRows[i];
+        const sebango = getVal(row, COL.sebango).toUpperCase();
+        const numero_parte = getVal(row, COL.numero_parte);
+
+        if (!sebango) {
           errors++;
           continue;
         }
 
+        const toNum = (v) => { const n = parseFloat(v); return isNaN(n) ? null : n; };
+        const toStr = (v) => v || null;
+
         const payload = {
-          sebango:              String(mapped.sebango).trim().toUpperCase(),
-          numero_parte:         String(mapped.numero_parte).trim(),
-          sebango_cliente:      mapped.sebango_cliente ? String(mapped.sebango_cliente).trim() : null,
-          ubicacion:            mapped.ubicacion ? String(mapped.ubicacion).trim() : null,
-          tipo_caja:            mapped.tipo_caja ? String(mapped.tipo_caja).trim() : null,
-          qpc:                  mapped.qpc !== '' ? Number(mapped.qpc) : null,
-          lado:                 mapped.lado ? String(mapped.lado).trim().toUpperCase() : null,
-          cliente:              mapped.cliente ? String(mapped.cliente).trim() : null,
-          minimo:               mapped.minimo !== '' ? Number(mapped.minimo) : null,
-          maximo:               mapped.maximo !== '' ? Number(mapped.maximo) : null,
-          color_custom:         mapped.color_custom ? String(mapped.color_custom).trim() : null,
-          cajas_por_ubicacion:  mapped.cajas_por_ubicacion !== '' ? Number(mapped.cajas_por_ubicacion) : null,
-          piezas_por_ubicacion: mapped.piezas_por_ubicacion !== '' ? Number(mapped.piezas_por_ubicacion) : null,
-          num_ubicaciones:      mapped.num_ubicaciones !== '' ? Number(mapped.num_ubicaciones) : null,
-          total_piezas:         mapped.total_piezas !== '' ? Number(mapped.total_piezas) : null,
+          sebango,
+          numero_parte:         toStr(numero_parte) || sebango, // fallback to sebango if formula not evaluated
+          sebango_cliente:      toStr(getVal(row, COL.sebango_cliente)),
+          ubicacion:            toStr(getVal(row, COL.ubicacion)),
+          tipo_caja:            toStr(getVal(row, COL.tipo_caja)),
+          qpc:                  toNum(getVal(row, COL.qpc)),
+          lado:                 toStr(getVal(row, COL.lado)),
+          cliente:              toStr(getVal(row, COL.cliente)),
+          minimo:               toNum(getVal(row, COL.minimo)),
+          maximo:               toNum(getVal(row, COL.maximo)),
+          cajas_por_ubicacion:  toNum(getVal(row, COL.cajas_por_ubicacion)),
+          piezas_por_ubicacion: toNum(getVal(row, COL.piezas_por_ubicacion)),
+          num_ubicaciones:      toNum(getVal(row, COL.num_ubicaciones)),
+          total_piezas:         toNum(getVal(row, COL.total_piezas)),
         };
 
-        // Upsert — inserta si no existe, actualiza si ya existe por sebango
         const { error } = await db.from(TABLE).upsert(payload, { onConflict: 'sebango' });
 
         if (error) {
-          updateProgress(i + 1, rows.length, `✕ Fila ${i + 2} (${payload.sebango}): ${error.message}`);
+          updateProgress(i + 1, dataRows.length, `✕ ${sebango}: ${error.message}`);
           errors++;
         } else {
           inserted++;
-          if ((i + 1) % 5 === 0 || i === rows.length - 1) {
-            updateProgress(i + 1, rows.length, `✓ ${inserted} registros procesados de ${rows.length}...`);
+          if (inserted % 10 === 0 || i === dataRows.length - 1) {
+            updateProgress(i + 1, dataRows.length, `✓ ${inserted} de ${dataRows.length} importados...`);
           }
         }
       }
 
-      finishProgress(`Completado: ${inserted} registros importados, ${errors} errores`);
+      finishProgress(`Completado: ${inserted} registros importados, ${errors} omitidos`);
       loadRecords();
 
     } catch (err) {
+      console.error(err);
       finishProgress('Error leyendo el archivo: ' + err.message);
     }
   };
   reader.readAsArrayBuffer(file);
-}
-
-// Helper: find value in row by possible column name variants
-function findCol(row, names) {
-  for (const name of names) {
-    if (row[name] !== undefined && row[name] !== '') return row[name];
-    // Case-insensitive search
-    const key = Object.keys(row).find(k => k.toLowerCase().trim() === name.toLowerCase().trim());
-    if (key !== undefined) return row[key];
-  }
-  return '';
 }
 
 // ─── UPLOAD MULTIPLE IMAGES ───────────────────────────────────────────────────
