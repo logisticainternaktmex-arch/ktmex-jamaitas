@@ -451,7 +451,7 @@ const TABLE = 'jamaitas_bd';
 const BUCKET_CLIENTES = 'jamaitas-clientes';
 const BUCKET_PRODUCTOS = 'jamaitas-productos';
 
-let supabase, allRecords = [], editingId = null, deletingId = null, currentBucket = 'clientes';
+let db, allRecords = [], editingId = null, deletingId = null, currentBucket = 'clientes';
 let authenticated = false;
 
 // ─── LOGIN ────────────────────────────────────────────────────────────────────
@@ -477,7 +477,7 @@ function logout() {
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 function initApp() {
-  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   loadRecords();
 }
 
@@ -494,7 +494,7 @@ function showView(view) {
 async function loadRecords() {
   const tbody = document.getElementById('table-body');
   tbody.innerHTML = '<tr><td colspan="12"><div class="loading"><div class="spinner"></div></div></td></tr>';
-  const { data, error } = await supabase.from(TABLE).select('*').order('sebango');
+  const { data, error } = await db.from(TABLE).select('*').order('sebango');
   if (error) { showToast('Error cargando datos: ' + error.message, 'error'); return; }
   allRecords = data || [];
   document.getElementById('record-count').textContent = allRecords.length + ' registros';
@@ -616,9 +616,9 @@ async function saveRecord() {
 
   let error;
   if (editingId) {
-    ({ error } = await supabase.from(TABLE).update(payload).eq('id', editingId));
+    ({ error } = await db.from(TABLE).update(payload).eq('id', editingId));
   } else {
-    ({ error } = await supabase.from(TABLE).insert(payload));
+    ({ error } = await db.from(TABLE).insert(payload));
   }
   if (error) { showToast('Error: ' + error.message, 'error'); return; }
   showToast(editingId ? 'Registro actualizado ✓' : 'Registro creado ✓', 'success');
@@ -637,7 +637,7 @@ function closeConfirm() {
   deletingId = null;
 }
 async function confirmDelete() {
-  const { error } = await supabase.from(TABLE).delete().eq('id', deletingId);
+  const { error } = await db.from(TABLE).delete().eq('id', deletingId);
   if (error) { showToast('Error: ' + error.message, 'error'); return; }
   showToast('Registro eliminado', 'success');
   closeConfirm();
@@ -653,7 +653,7 @@ async function loadBucket(bucket) {
   const grid = document.getElementById('storage-grid');
   grid.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
   const bucketName = bucket === 'clientes' ? BUCKET_CLIENTES : BUCKET_PRODUCTOS;
-  const { data, error } = await supabase.storage.from(bucketName).list('', { limit: 200 });
+  const { data, error } = await db.storage.from(bucketName).list('', { limit: 200 });
   if (error) { grid.innerHTML = '<p style="color:var(--red)">Error: ' + error.message + '</p>'; return; }
   if (!data || !data.length) { grid.innerHTML = '<p style="color:var(--text-muted)">No hay imágenes en este bucket.</p>'; return; }
   grid.innerHTML = data.filter(f => f.name && !f.name.endsWith('/')).map(f => {
@@ -669,7 +669,7 @@ async function loadBucket(bucket) {
 async function uploadToStorage(input) {
   const file = input.files[0]; if (!file) return;
   const bucketName = currentBucket === 'clientes' ? BUCKET_CLIENTES : BUCKET_PRODUCTOS;
-  const { error } = await supabase.storage.from(bucketName).upload(file.name, file, { upsert: true });
+  const { error } = await db.storage.from(bucketName).upload(file.name, file, { upsert: true });
   if (error) { showToast('Error subiendo: ' + error.message, 'error'); return; }
   showToast('Imagen subida: ' + file.name + ' ✓', 'success');
   loadBucket(currentBucket);
@@ -679,7 +679,7 @@ async function uploadToStorage(input) {
 async function deleteImage(name) {
   if (!confirm('¿Eliminar imagen ' + name + '?')) return;
   const bucketName = currentBucket === 'clientes' ? BUCKET_CLIENTES : BUCKET_PRODUCTOS;
-  const { error } = await supabase.storage.from(bucketName).remove([name]);
+  const { error } = await db.storage.from(bucketName).remove([name]);
   if (error) { showToast('Error: ' + error.message, 'error'); return; }
   showToast('Imagen eliminada ✓', 'success');
   loadBucket(currentBucket);
