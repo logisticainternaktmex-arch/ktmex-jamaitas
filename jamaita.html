@@ -6,12 +6,13 @@
 <title>KTMEX — Visor Jamaitas</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<!-- Using qrcodejs — more reliable than qrcode npm package -->
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
 :root{
   --black:#111;--blue:#3576ac;--muted:#888;
   --green:#00B050;--yellow:#FFC000;--red:#FF0000;--lime:#92D050;
-  --border:1.5px solid #111;
+  --bd:1.5px solid #111;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Barlow Condensed',sans-serif;background:#d8d8d8;min-height:100vh;}
@@ -60,203 +61,148 @@ body{font-family:'Barlow Condensed',sans-serif;background:#d8d8d8;min-height:100
 .tbtn{background:var(--blue);color:white;border:none;border-radius:4px;padding:9px 18px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;}
 .tbtn.dk{background:#333;}
 
-/* ══════════════════════════════════════════════════════
-   JAMAITA — EXACT EXCEL PROPORTIONS
-   
-   Total width reference: 930px (30 cols × ~31px)
-   
-   HORIZONTAL SECTIONS:
-   ┌──────────────────────────────────────────────────────────────────────────┐
-   │  campo4 40% (cols B-M=12)  │ emp 20% │ qpc 13.3% │ cliente 26.7%       │
-   ├──────────────────────────────────────────────────────────────────────────┤
-   │KTMEX│  campo1 36.7% (C-M)  │  campo11 46.7% (N-AA)   │  QR 13.3%(AB-AE)│
-   │lbl  ├──────────────────────┤                          │                 │
-   │31px │  campo2 36.7%        │                          │                 │
-   ├──────────────────────────────────────────────────────────────────────────┤
-   │CLI  │  campo3 36.7%        │   min 30% (N-V)    │  max 30% (W-AE)      │
-   └──────────────────────────────────────────────────────────────────────────┘
-   
-   VERTICAL HEIGHTS (px):
-   top row:  100px (rows 3-7)
-   mid row:  198px (rows 8-18: campo1=126px, campo2=72px)
-   bot row:  127px (rows 19-25)
-   TOTAL:    425px
-══════════════════════════════════════════════════════ */
-
+/* ═══════════════════════════════════════════
+   JAMAITA
+═══════════════════════════════════════════ */
 .j-sheet{padding:10px 16px 20px;}
 .j-pair{display:flex;flex-direction:column;gap:16px;max-width:980px;margin:0 auto;}
 
-/* The jamaita outer box */
 .jamaita{
-  background:white;
-  border:var(--border);
-  width:100%;
-  font-family:'Barlow Condensed',sans-serif;
-  overflow:hidden;
+  background:white;border:var(--bd);width:100%;
+  font-family:'Barlow Condensed',sans-serif;overflow:hidden;
 }
 
 /* ── TOP ROW: 100px ── */
 .j-top{
   display:grid;
-  grid-template-columns: 40% 20% 13.3% 26.7%;
+  grid-template-columns:40% 20% 13.3% 26.7%;
   height:100px;
-  border-bottom:var(--border);
+  border-bottom:var(--bd);
 }
-/* All top children get right border except last */
-.j-top > *{border-right:var(--border);}
-.j-top > *:last-child{border-right:none;}
+.j-top>*{border-right:var(--bd);}
+.j-top>*:last-child{border-right:none;}
 
-/* campo 4 — ubicacion text */
 .j-f4{
   display:flex;align-items:center;justify-content:center;
   padding:6px 10px;text-align:center;
   font-size:clamp(16px,3vw,38px);font-weight:900;
   height:100%;word-break:break-word;
 }
-/* campo 4 — 3 arrows */
 .j-f4-arrows{
   display:flex;align-items:center;justify-content:space-evenly;
   padding:4px 8px;height:100%;
 }
-
-/* Empaque / QPC / Cliente cells */
-.j-hcell{
-  display:grid;
-  grid-template-rows:37px 63px;  /* header=37px, value=63px */
-}
+.j-hcell{display:grid;grid-template-rows:37px 63px;}
 .j-hlbl{
   font-size:clamp(10px,1.4vw,15px);font-weight:400;color:#111;
-  text-align:center;
-  display:flex;align-items:center;justify-content:center;
-  border-bottom:var(--border);padding:2px 4px;
+  text-align:center;display:flex;align-items:center;justify-content:center;
+  border-bottom:var(--bd);padding:2px 4px;
 }
 .j-hval{
   font-size:clamp(14px,2.2vw,26px);font-weight:700;
   display:flex;align-items:center;justify-content:center;
   text-align:center;padding:2px 4px;
 }
-/* Cliente image */
-.j-cli7{
-  display:flex;align-items:center;justify-content:center;
-  height:63px;padding:4px 6px;
-}
+.j-cli7{display:flex;align-items:center;justify-content:center;height:63px;padding:4px 6px;}
 .j-cli7 img{max-height:52px;max-width:100%;object-fit:contain;}
 .j-cli7-txt{font-size:clamp(10px,1.5vw,18px);font-weight:700;color:#111;text-align:center;}
 
 /* ── MID ROW: 198px ── */
 .j-mid{
   display:grid;
-  /* KTMEX(31px fixed) | campo1+2 | campo11 | QR */
-  /* Remaining 3 cols share (100%-31px): 341/899=37.9% | 434/899=48.3% | 124/899=13.8% */
-  grid-template-columns: 31px calc((100% - 31px) * 341/899) calc((100% - 31px) * 434/899) calc((100% - 31px) * 124/899);
+  grid-template-columns: 31px calc((100% - 31px)*341/899) calc((100% - 31px)*434/899) calc((100% - 31px)*124/899);
   height:198px;
-  border-bottom:var(--border);
+  border-bottom:var(--bd);
 }
-
-/* KTMEX vertical label */
 .j-vlbl{
   writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg);
   font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
-  background:white;
-  border-right:var(--border);
+  background:white;border-right:var(--bd);
   display:flex;align-items:center;justify-content:center;
   white-space:nowrap;color:#111;
 }
-
-/* campo1 + campo2 */
 .j-c12{
-  display:grid;
-  grid-template-rows:126px 72px;
-  border-right:var(--border);
+  display:grid;grid-template-rows:126px 72px;
+  border-right:var(--bd);
 }
 .j-f1{
   font-size:clamp(30px,5.5vw,76px);font-weight:900;
   display:flex;align-items:center;justify-content:center;
   text-align:center;padding:4px 8px;
-  border-bottom:var(--border);
+  border-bottom:var(--bd);
   word-break:break-word;overflow:hidden;
   transition:background .2s,color .2s;
 }
+/* CHANGE 2: campo2 with visible margin/padding so text looks enclosed */
 .j-f2{
   font-size:clamp(11px,1.8vw,20px);font-weight:700;
   display:flex;align-items:center;justify-content:center;
-  text-align:center;padding:4px 8px;
+  text-align:center;
+  padding:6px 12px;         /* clear padding so text doesn't touch border */
   word-break:break-all;overflow:hidden;
+  border:2px solid transparent; /* visual breathing room */
 }
-
-/* campo11 — product image */
 .j-f11{
   display:flex;align-items:center;justify-content:center;
-  border-right:var(--border);
-  padding:8px;overflow:hidden;
+  border-right:var(--bd);padding:8px;overflow:hidden;
 }
 .j-f11 img{max-width:100%;max-height:182px;object-fit:contain;}
 .j-f11-ph{color:#ccc;font-size:12px;text-align:center;}
 
-/* QR column — INSIDE the jamaita border */
+/* QR column — label + QR image + sebango all together, NO separator line */
 .j-qr-col{
-  display:grid;
-  grid-template-rows:40px 1fr auto;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  padding:6px 4px 4px;
   overflow:hidden;
+  gap:4px;
 }
 .j-qr-lbl{
   font-size:clamp(11px,1.6vw,18px);font-weight:700;
-  display:flex;align-items:center;justify-content:center;
-  border-bottom:var(--border);color:#111;
-  background:white;
+  color:#111;text-align:center;
+  /* CHANGE 1: border-bottom REMOVED — QR label and sebango are now one unified space */
+  width:100%;text-align:center;
+  margin-bottom:2px;
 }
 .j-qr-img{
   display:flex;align-items:center;justify-content:center;
-  padding:4px 2px;overflow:hidden;
+  flex:1;width:100%;overflow:hidden;
 }
-/* Make canvas fit inside the QR column */
-.j-qr-img canvas{
-  max-width:100%!important;
-  max-height:120px!important;
-  width:auto!important;
-  height:auto!important;
-}
+/* QR canvas sized to fit */
+.j-qr-img>div{display:flex;align-items:center;justify-content:center;width:100%;height:100%;}
+.j-qr-img>div>img,.j-qr-img>div>canvas{max-width:100%!important;max-height:110px!important;width:auto!important;height:auto!important;}
+/* CHANGE 1: sebango below QR, no border separating it */
 .j-qr-num{
-  font-size:8px;color:#555;text-align:center;
-  padding:2px 2px 4px;word-break:break-all;
-  border-top:var(--border);
+  font-size:clamp(7px,1vw,10px);color:#333;font-weight:700;
+  text-align:center;width:100%;
+  word-break:break-all;letter-spacing:.5px;
+  /* NO border-top — unified with QR area above */
 }
 
 /* ── BOT ROW: 127px ── */
 .j-bot{
   display:grid;
-  /* CLIENTE(31px) | campo3 | min | max */
-  grid-template-columns: 31px calc((100% - 31px) * 341/899) calc((100% - 31px) * 279/899) calc((100% - 31px) * 279/899);
+  grid-template-columns: 31px calc((100% - 31px)*341/899) calc((100% - 31px)*279/899) calc((100% - 31px)*279/899);
   height:127px;
 }
-/* Note: 341+279+279=899 ✓ */
-
 .j-f3{
   font-size:clamp(24px,4.5vw,68px);font-weight:900;
   display:flex;align-items:center;justify-content:center;
   text-align:center;padding:4px 8px;
-  border-right:var(--border);
+  border-right:var(--bd);
   word-break:break-word;overflow:hidden;
   transition:background .2s,color .2s;
 }
-
-/* Min / Max */
-.j-mmcell{
-  display:grid;
-  grid-template-rows:auto 1fr;
-  overflow:hidden;
-}
-.j-mmcell.mn{border-right:var(--border);}
+.j-mmcell{display:grid;grid-template-rows:auto 1fr;overflow:hidden;}
+.j-mmcell.mn{border-right:var(--bd);}
 .j-mmlbl{
   font-size:clamp(8px,1.1vw,13px);font-weight:400;
   display:flex;align-items:center;justify-content:center;
-  text-align:center;padding:5px 4px;
-  border-bottom:var(--border);
+  text-align:center;padding:5px 4px;border-bottom:var(--bd);
 }
-.j-mmval{
-  font-size:clamp(20px,3.5vw,42px);font-weight:900;
-  display:flex;align-items:center;justify-content:center;
-}
+.j-mmval{font-size:clamp(20px,3.5vw,42px);font-weight:900;display:flex;align-items:center;justify-content:center;}
 .j-mmcell.mn .j-mmlbl,.j-mmcell.mn .j-mmval{background:var(--red);color:white;}
 .j-mmcell.mx .j-mmlbl,.j-mmcell.mx .j-mmval{background:var(--lime);color:#111;}
 
@@ -265,19 +211,14 @@ body{font-family:'Barlow Condensed',sans-serif;background:#d8d8d8;min-height:100
 .c-amarillo{background:var(--yellow)!important;color:#111!important;}
 .c-verde   {background:var(--green)!important;color:white!important;}
 
-/* PRINT — 2 per page */
+/* PRINT */
 @media print{
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
   body{background:white!important;margin:0;padding:0;}
   .app-hdr,.j-bar{display:none!important;}
   #jamaita-panel{display:block!important;}
   .j-sheet{padding:4mm;}
-  .j-pair{
-    gap:4mm;max-width:100%;margin:0;
-    height:calc(297mm - 16mm);
-    display:grid;grid-template-rows:1fr 1fr;
-    page-break-after:always;
-  }
+  .j-pair{gap:4mm;max-width:100%;margin:0;height:calc(297mm - 16mm);display:grid;grid-template-rows:1fr 1fr;page-break-after:always;}
   .j-wrap{height:100%;display:flex;flex-direction:column;}
   .jamaita{flex:1;border:0.75pt solid #111;display:flex;flex-direction:column;}
   .j-top{height:auto;flex:0 0 20%;min-height:0;}
@@ -387,7 +328,7 @@ body{font-family:'Barlow Condensed',sans-serif;background:#d8d8d8;min-height:100
 <div class="lov" id="loader">
   <div class="lbox">
     <div class="sp"></div>
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;letter-spacing:1px;color:#333">Cargando...</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;color:#333">Cargando...</div>
   </div>
 </div>
 
@@ -398,12 +339,11 @@ const TBL      = 'jamaitas_bd';
 const BKT_CLI  = 'jamaitas-clientes';
 const BKT_PROD = 'jamaitas-productos';
 
-/* 3 copies of selected arrow for campo4 */
 const ARR = {
-  1:`<svg viewBox="0 0 50 70" width="42" height="58"><polygon points="25,2 48,68 25,52 2,68" fill="#111"/></svg>`,
-  2:`<svg viewBox="0 0 50 70" width="42" height="58"><polygon points="25,68 48,2 25,18 2,2" fill="#111"/></svg>`,
-  3:`<svg viewBox="0 0 70 50" width="58" height="42"><polygon points="2,25 68,2 52,25 68,48" fill="#111"/></svg>`,
-  4:`<svg viewBox="0 0 70 50" width="58" height="42"><polygon points="68,25 2,2 18,25 2,48" fill="#111"/></svg>`,
+  1:`<svg viewBox="0 0 50 70" width="40" height="56"><polygon points="25,2 48,68 25,52 2,68" fill="#111"/></svg>`,
+  2:`<svg viewBox="0 0 50 70" width="40" height="56"><polygon points="25,68 48,2 25,18 2,2" fill="#111"/></svg>`,
+  3:`<svg viewBox="0 0 70 50" width="56" height="40"><polygon points="2,25 68,2 52,25 68,48" fill="#111"/></svg>`,
+  4:`<svg viewBox="0 0 70 50" width="56" height="40"><polygon points="68,25 2,2 18,25 2,48" fill="#111"/></svg>`,
 };
 
 let db, rec, arw;
@@ -433,15 +373,9 @@ async function buscar(){
 }
 
 function selMode(m){if(m==='ubicacion')render(null);else goTo('arrow');}
-
-function pickA(n){
-  arw=n;
-  [1,2,3,4].forEach(i=>document.getElementById('ao'+i).className='ao'+(i===n?' sel':''));
-  document.getElementById('btnok').disabled=false;
-}
+function pickA(n){arw=n;[1,2,3,4].forEach(i=>document.getElementById('ao'+i).className='ao'+(i===n?' sel':''));document.getElementById('btnok').disabled=false;}
 function okArrow(){if(arw)render(arw);}
 
-/* Color logic */
 function getCC(r){
   if(r.color_custom&&/^#[0-9A-Fa-f]{6}$/.test(r.color_custom))return null;
   const l=(r.lado||'').toUpperCase();
@@ -464,20 +398,16 @@ function ca(r,base){
   return `class="${base}"`;
 }
 
-/* Build jamaita HTML */
-function buildJ(r,arrVer,qrId){
-  /* Campo 4 */
+function buildJ(r,arrVer,qrDivId){
   const c4 = arrVer
     ? `<div class="j-f4-arrows">${ARR[arrVer]}${ARR[arrVer]}${ARR[arrVer]}</div>`
     : `<div class="j-f4">${r.ubicacion||''}</div>`;
 
-  /* Cliente img */
   const cliSrc = r.cliente ? `${SB_URL}/storage/v1/object/public/${BKT_CLI}/${r.cliente}.png` : '';
   const cliH = cliSrc
     ? `<img src="${cliSrc}" alt="${r.cliente||''}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span class="j-cli7-txt" style="display:none">${r.cliente||''}</span>`
     : `<span class="j-cli7-txt">${r.cliente||''}</span>`;
 
-  /* Producto img */
   const prSrc = r.numero_parte ? `${SB_URL}/storage/v1/object/public/${BKT_PROD}/${r.numero_parte}.JPG` : '';
   const prH = prSrc
     ? `<img src="${prSrc}" alt="${r.numero_parte||''}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span class="j-f11-ph" style="display:none">Sin imagen</span>`
@@ -509,7 +439,9 @@ function buildJ(r,arrVer,qrId){
     <div class="j-f11">${prH}</div>
     <div class="j-qr-col">
       <div class="j-qr-lbl">QR</div>
-      <div class="j-qr-img"><canvas id="${qrId}"></canvas></div>
+      <div class="j-qr-img">
+        <div id="${qrDivId}"></div>
+      </div>
       <div class="j-qr-num">${r.sebango||''}</div>
     </div>
   </div>
@@ -528,34 +460,53 @@ function buildJ(r,arrVer,qrId){
   </div>`;
 }
 
-/* QR — calculate size to fit inside the column */
-function makeQR(id, text){
-  const canvas = document.getElementById(id);
-  if(!canvas) return;
-  /* Get the actual width of the QR column container */
-  const col = canvas.closest('.j-qr-col');
-  const w = col ? Math.min(col.offsetWidth - 8, 110) : 100;
-  try{
-    QRCode.toCanvas(canvas, text||'KTMEX', {
-      width: w,
-      margin: 1,
-      color:{dark:'#000000',light:'#ffffff'}
-    }, err => { if(err) console.warn('QR error:', err); });
-  } catch(e){ console.warn(e); }
+/* QR using qrcodejs library — renders into a div, not a canvas */
+function makeQR(divId, text){
+  const el = document.getElementById(divId);
+  if(!el) return;
+  el.innerHTML = ''; /* clear any previous */
+  try {
+    new QRCode(el, {
+      text: text || 'KTMEX',
+      width: 100,
+      height: 100,
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+    /* Make the generated image responsive */
+    setTimeout(() => {
+      const img = el.querySelector('img');
+      if(img){
+        img.style.maxWidth = '100%';
+        img.style.maxHeight = '110px';
+        img.style.width = 'auto';
+        img.style.height = 'auto';
+      }
+      const canvas = el.querySelector('canvas');
+      if(canvas){
+        canvas.style.maxWidth = '100%';
+        canvas.style.maxHeight = '110px';
+      }
+    }, 50);
+  } catch(e) {
+    console.warn('QR generation error:', e);
+    el.innerHTML = `<div style="font-size:9px;color:#999;text-align:center">QR<br>${text}</div>`;
+  }
 }
 
 function render(arrVer){
   load(true);
-  document.getElementById('j1').innerHTML = buildJ(rec, arrVer, 'qr1');
-  document.getElementById('j2').innerHTML = buildJ(rec, arrVer, 'qr2');
+  document.getElementById('j1').innerHTML = buildJ(rec, arrVer, 'qrdiv1');
+  document.getElementById('j2').innerHTML = buildJ(rec, arrVer, 'qrdiv2');
   load(false);
   goTo('jamaita');
-  /* Generate QR after DOM is fully painted */
+  /* Generate QR after panel is visible and DOM is painted */
   requestAnimationFrame(() => {
     setTimeout(() => {
-      makeQR('qr1', rec.sebango || 'KTMEX');
-      makeQR('qr2', rec.sebango || 'KTMEX');
-    }, 150);
+      makeQR('qrdiv1', rec.sebango || 'KTMEX');
+      makeQR('qrdiv2', rec.sebango || 'KTMEX');
+    }, 200);
   });
 }
 </script>
