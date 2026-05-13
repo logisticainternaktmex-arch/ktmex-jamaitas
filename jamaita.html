@@ -8,51 +8,30 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <style>
-/* ═══════════════════════════════════════════
-   ROOT VARIABLES
-═══════════════════════════════════════════ */
 :root{
-  --black:#111;--gray:#1e1e1e;--gray2:#2a2a2a;--border:#3f3f3f;
-  --text:#f0f0f0;--muted:#888;--blue:#3576ac;--white:#fff;
-  /* Exact Excel colors */
-  --green:#00B050;   /* FF00B050 */
-  --yellow:#FFC000;  /* FFFFC000 */
-  --red:#FF0000;     /* FFFF0000 */
-  --lime:#92D050;    /* FF92D050 */
+  --black:#111;--blue:#3576ac;--muted:#888;
+  --green:#00B050;--yellow:#FFC000;--red:#FF0000;--lime:#92D050;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Barlow',sans-serif;background:#e0e0e0;min-height:100vh;}
 
-/* ═══════════════════════════════════════════
-   APP HEADER
-═══════════════════════════════════════════ */
+/* ── HEADER ── */
 .app-hdr{
   background:var(--black);color:white;padding:10px 20px;
-  display:flex;align-items:center;justify-content:space-between;
-  border-bottom:3px solid var(--blue);position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;gap:12px;
+  border-bottom:3px solid var(--blue);
 }
 .hdr-brand{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;letter-spacing:3px;color:var(--blue);}
 .hdr-sub{font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;}
 
-/* ═══════════════════════════════════════════
-   PANELS
-═══════════════════════════════════════════ */
+/* ── PANELS ── */
 .panel{display:none;}
 .panel.on{display:block;}
 
-/* shared card */
-.card{
-  background:white;border-radius:8px;padding:36px;
-  max-width:460px;margin:50px auto;
-  box-shadow:0 8px 32px rgba(0,0,0,.13);
-}
-.card h2{
-  font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:700;
-  text-align:center;margin-bottom:6px;color:#111;letter-spacing:1px;
-}
+/* ── CARD (shared) ── */
+.card{background:white;border-radius:8px;padding:36px;max-width:460px;margin:50px auto;box-shadow:0 8px 32px rgba(0,0,0,.13);}
+.card h2{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:700;text-align:center;margin-bottom:6px;color:#111;}
 .card .sub{text-align:center;color:#666;font-size:13px;margin-bottom:26px;}
-
-/* inputs */
 .lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#666;margin-bottom:7px;}
 .inp{
   width:100%;border:2px solid #ddd;border-radius:6px;padding:14px 18px;
@@ -61,139 +40,99 @@ body{font-family:'Barlow',sans-serif;background:#e0e0e0;min-height:100vh;}
   outline:none;transition:border-color .2s;margin-bottom:16px;
 }
 .inp:focus{border-color:var(--blue);}
-
-/* buttons */
-.btn-blue{
-  width:100%;background:var(--blue);color:white;border:none;border-radius:6px;
-  padding:14px;font-family:'Barlow Condensed',sans-serif;font-size:17px;
-  font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;
-}
+.btn-blue{width:100%;background:var(--blue);color:white;border:none;border-radius:6px;padding:14px;font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;}
 .btn-blue:hover{background:#2a5f8f;}
-.btn-green{
-  width:100%;background:#2ecc71;color:#111;border:none;border-radius:6px;
-  padding:13px;font-family:'Barlow Condensed',sans-serif;font-size:16px;
-  font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;
-}
+.btn-green{width:100%;background:#2ecc71;color:#111;border:none;border-radius:6px;padding:13px;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;}
 .btn-green:hover{background:#27ae60;}
 .btn-green:disabled{background:#ccc;cursor:not-allowed;}
-.btn-back{
-  background:none;border:none;color:#888;cursor:pointer;font-size:13px;
-  text-decoration:underline;display:block;margin-top:16px;width:100%;text-align:center;
-}
+.btn-back{background:none;border:none;color:#888;cursor:pointer;font-size:13px;text-decoration:underline;display:block;margin-top:16px;width:100%;text-align:center;}
 .err{color:#e74c3c;font-size:13px;text-align:center;margin-top:10px;display:none;}
 
-/* mode buttons */
-.mode-seb{
-  text-align:center;font-family:'Barlow Condensed',sans-serif;
-  font-size:38px;font-weight:900;color:var(--blue);letter-spacing:3px;margin-bottom:4px;
-}
+/* ── MODE ── */
+.mode-seb{text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:38px;font-weight:900;color:var(--blue);letter-spacing:3px;margin-bottom:4px;}
 .mode-info{text-align:center;color:#555;font-size:13px;margin-bottom:24px;}
 .mode-q{text-align:center;font-weight:700;font-size:15px;color:#111;margin-bottom:16px;}
 .mode-btns{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-.mode-btn{
-  border:2px solid #ddd;border-radius:8px;padding:22px 12px;
-  cursor:pointer;background:white;transition:all .2s;text-align:center;
-}
+.mode-btn{border:2px solid #ddd;border-radius:8px;padding:22px 12px;cursor:pointer;background:white;transition:all .2s;text-align:center;}
 .mode-btn:hover{border-color:var(--blue);background:#f0f6ff;}
 .mode-btn .mi{font-size:32px;margin-bottom:8px;}
 .mode-btn .mn{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:#111;letter-spacing:1px;}
 .mode-btn .mh{font-size:12px;color:#666;margin-top:4px;}
 
-/* arrow grid */
+/* ── ARROW SELECTION ── */
 .arrow-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;}
-.ao{
-  border:3px solid #ddd;border-radius:8px;padding:16px 10px;
-  cursor:pointer;background:white;transition:all .2s;text-align:center;
-}
+.ao{border:3px solid #ddd;border-radius:8px;padding:16px 10px;cursor:pointer;background:white;transition:all .2s;text-align:center;}
 .ao:hover{border-color:var(--blue);}
 .ao.sel{border-color:var(--blue);background:#e8f2fb;}
 .ao svg{width:70px;height:70px;display:block;margin:0 auto 8px;}
 .ao .al{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;color:#111;}
 
-/* toolbar */
-.j-bar{
-  max-width:760px;margin:0 auto 14px;padding:0 12px;
-  display:flex;gap:10px;flex-wrap:wrap;align-items:center;
-}
-.tbtn{
-  background:var(--blue);color:white;border:none;border-radius:4px;
-  padding:9px 18px;font-family:'Barlow Condensed',sans-serif;font-size:13px;
-  font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;
-}
+/* ── TOOLBAR ── */
+.j-bar{max-width:780px;margin:0 auto 14px;padding:0 12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.tbtn{background:var(--blue);color:white;border:none;border-radius:4px;padding:9px 18px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;}
 .tbtn.dk{background:#333;}
 
-/* ═══════════════════════════════════════════
-   JAMAITA — EXACT PROPORTIONS
-   
-   Columns (total 30 cols from B to AE):
-   ┌─────────────────────┬──────────┬──────┬────────────────┐
-   │  campo4 (12/30=40%) │emp(6=20%)│qpc(4)│ cliente (8=27%)│
-   └─────────────────────┴──────────┴──────┴────────────────┘
-   
-   Mid/Bot left section has:
-   - KTMEX/CLIENTE vertical label: 1 col (thin)
-   - campos 1,2,3: 11 cols
-   
-   Right section (18 cols):
-   - campo11 image: 14 cols (77.8%)
-   - QR: 4 cols (22.2%)
-   
-   Min/Max each: 9 cols (50%)
-   
-   Row heights (pts → relative):
-   top: 75px  (header+vals combined)
-   campo1: ~95px
-   campo2: ~54px  
-   campo3: ~95px
-   minmax: ~70px
-═══════════════════════════════════════════ */
-.j-wrap{max-width:760px;margin:0 auto;padding:0 12px;}
+/* ══════════════════════════════════════════
+   JAMAITA LAYOUT
+   Exact proportions from Excel file:
+   Col widths: campo4=40% | emp=20% | qpc=13.4% | cli=26.6%
+   QR is INSIDE the jamaita (right column)
+   Split: campo11=77.8% | QR=22.2% of right area
+══════════════════════════════════════════ */
+.j-sheet{padding:10px;}
+.j-pair{display:grid;grid-template-rows:auto auto;gap:12px;max-width:780px;margin:0 auto;}
+.j-wrap{width:100%;}
 
 .jamaita{
-  background:white;
-  border:2px solid #111;
-  width:100%;
+  background:white;border:2px solid #111;width:100%;
   font-family:'Barlow Condensed',sans-serif;
-  border-collapse:collapse;
 }
 
-/* ── TOP ROW ── */
+/* TOP ROW */
 .j-top{
   display:grid;
-  grid-template-columns: 40fr 20fr 13.4fr 26.6fr;
+  grid-template-columns:40fr 20fr 13.4fr 26.6fr;
   border-bottom:2px solid #111;
-  min-height:75px;
+  min-height:80px;
 }
 .j-top>div{border-right:2px solid #111;}
 .j-top>div:last-child{border-right:none;}
 
-/* campo 4 */
+/* campo 4 — texto centrado */
 .j-f4{
-  display:flex;align-items:center;padding:8px 12px;
-  font-size:clamp(18px,2.8vw,40px);font-weight:900;letter-spacing:1px;min-height:75px;
+  display:flex;align-items:center;justify-content:center;
+  padding:8px 10px;text-align:center;
+  font-size:clamp(16px,2.5vw,32px);font-weight:900;letter-spacing:1px;
+  min-height:80px;word-break:break-all;
 }
-.j-f4-arrow{display:flex;align-items:center;justify-content:center;min-height:75px;padding:6px;}
-.j-f4-arrow svg{max-height:60px;width:auto;}
+/* campo 4 flechas — 3 flechas distribuidas */
+.j-f4-arrows{
+  display:flex;align-items:center;justify-content:space-around;
+  padding:6px 10px;min-height:80px;
+}
+.j-f4-arrows svg{flex-shrink:0;}
 
-/* header cells (empaque/qpc/cliente) */
+/* header cells */
 .j-hcell{display:grid;grid-template-rows:auto 1fr;}
 .j-hlbl{
-  font-size:clamp(8px,1.1vw,12px);font-weight:600;letter-spacing:1px;
+  font-size:clamp(7px,1vw,11px);font-weight:700;letter-spacing:1px;
   text-transform:uppercase;color:#444;padding:4px 6px;
-  border-bottom:1px solid #bbb;white-space:nowrap;
+  border-bottom:1px solid #bbb;text-align:center;
 }
 .j-hval{
-  display:flex;align-items:center;padding:4px 6px;
-  font-size:clamp(12px,1.8vw,22px);font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  padding:4px 6px;font-size:clamp(12px,1.8vw,22px);font-weight:700;
+  text-align:center;
 }
-.j-cli7{display:flex;align-items:center;justify-content:center;padding:4px 6px;}
+/* cliente image cell */
+.j-cli7{display:flex;align-items:center;justify-content:center;padding:4px 6px;flex:1;}
 .j-cli7 img{max-height:52px;max-width:100%;object-fit:contain;}
 .j-cli7-txt{font-size:clamp(9px,1.4vw,16px);font-weight:700;color:#333;text-align:center;}
 
-/* ── MID ROW ── */
+/* MID ROW */
 .j-mid{
   display:grid;
-  grid-template-columns: 22px 1fr;
+  grid-template-columns:22px 1fr;
   border-bottom:2px solid #111;
 }
 .j-vlbl{
@@ -205,128 +144,102 @@ body{font-family:'Barlow',sans-serif;background:#e0e0e0;min-height:100vh;}
 }
 .j-midR{
   display:grid;
-  /* left-cols (campo1+2) | campo11 | QR
-     campo4 area = 40% of total, KTMEX label = 22px, so inner left ≈ 40% - 22px
-     right area = 60% split into 14/18 and 4/18 */
-  grid-template-columns: calc(40% - 22px) calc(60% * 14/18) calc(60% * 4/18);
+  grid-template-columns:calc(40% - 22px) calc(60% * 0.778) calc(60% * 0.222);
 }
-.j-c12{
-  border-right:2px solid #111;
-  display:grid;grid-template-rows:1fr auto;
-}
+/* campos 1 + 2 */
+.j-c12{border-right:2px solid #111;display:grid;grid-template-rows:1fr auto;}
 .j-f1{
-  display:flex;align-items:center;padding:8px 12px;
-  font-size:clamp(24px,4.5vw,64px);font-weight:900;letter-spacing:1px;
+  display:flex;align-items:center;justify-content:center;
+  padding:8px 10px;text-align:center;
+  font-size:clamp(22px,4vw,60px);font-weight:900;letter-spacing:1px;
   border-bottom:2px solid #111;min-height:95px;
   word-break:break-all;transition:background .3s,color .3s;
 }
 .j-f2{
-  display:flex;align-items:center;padding:6px 10px;
-  font-size:clamp(10px,1.6vw,18px);font-weight:600;
-  min-height:54px;word-break:break-all;
+  display:flex;align-items:center;justify-content:center;
+  padding:6px 10px;text-align:center;
+  font-size:clamp(9px,1.4vw,16px);font-weight:600;
+  min-height:48px;word-break:break-all;
 }
+/* campo 11 image */
 .j-f11{
   display:flex;align-items:center;justify-content:center;
-  border-right:2px solid #111;min-height:149px;padding:8px;
+  border-right:2px solid #111;min-height:143px;padding:8px;
 }
-.j-f11 img{max-width:100%;max-height:140px;object-fit:contain;}
+.j-f11 img{max-width:100%;max-height:135px;object-fit:contain;}
 .j-f11-ph{color:#bbb;font-size:11px;text-align:center;}
-.j-qr{
-  display:grid;grid-template-rows:auto 1fr auto;
-  padding:6px 4px;text-align:center;align-items:center;
-}
-.j-qr-lbl{font-size:10px;font-weight:700;letter-spacing:2px;color:#333;margin-bottom:3px;}
-.j-qr-c{display:flex;justify-content:center;}
-.j-qr-num{font-size:8px;color:#666;letter-spacing:1px;margin-top:3px;word-break:break-all;}
 
-/* ── BOT ROW ── */
-.j-bot{display:grid;grid-template-columns:22px 1fr;}
-.j-botR{
+/* QR — inside jamaita, right column */
+.j-qr{
   display:grid;
-  grid-template-columns: calc(40% - 22px) 1fr;
+  grid-template-rows:auto 1fr auto;
+  border-left:0;
 }
+.j-qr-lbl{
+  font-size:10px;font-weight:700;letter-spacing:2px;color:#333;
+  text-align:center;padding:4px 2px;
+  border-bottom:1px solid #bbb;
+}
+.j-qr-img{
+  display:flex;align-items:center;justify-content:center;
+  padding:4px 2px;
+}
+.j-qr-num{
+  font-size:8px;color:#666;letter-spacing:1px;
+  text-align:center;padding:2px;word-break:break-all;
+}
+
+/* BOT ROW */
+.j-bot{display:grid;grid-template-columns:22px 1fr;}
+.j-botR{display:grid;grid-template-columns:calc(40% - 22px) 1fr;}
 .j-f3w{border-right:2px solid #111;}
 .j-f3{
-  display:flex;align-items:center;padding:8px 12px;
-  font-size:clamp(20px,4vw,56px);font-weight:900;letter-spacing:1px;
+  display:flex;align-items:center;justify-content:center;
+  padding:8px 10px;text-align:center;
+  font-size:clamp(18px,3.5vw,52px);font-weight:900;letter-spacing:1px;
   min-height:95px;word-break:break-all;transition:background .3s,color .3s;
 }
 .j-mm{display:grid;grid-template-columns:1fr 1fr;}
 .j-mmcell{display:grid;grid-template-rows:auto 1fr;}
 .j-mmcell:first-child{border-right:2px solid #111;}
 .j-mmlbl{
-  font-size:clamp(7px,1.1vw,12px);font-weight:700;text-transform:uppercase;
+  font-size:clamp(7px,1vw,12px);font-weight:700;text-transform:uppercase;
   padding:5px 6px;text-align:center;border-bottom:1px solid #111;letter-spacing:.5px;
 }
 .j-mmval{
   display:flex;align-items:center;justify-content:center;
-  font-size:clamp(18px,3vw,40px);font-weight:900;min-height:60px;
+  font-size:clamp(18px,3vw,40px);font-weight:900;min-height:58px;
 }
-/* Mínimo = red, Máximo = lime — ALL combinations */
 .j-mmcell.mn .j-mmlbl,.j-mmcell.mn .j-mmval{background:var(--red);color:white;}
 .j-mmcell.mx .j-mmlbl,.j-mmcell.mx .j-mmval{background:var(--lime);color:#111;}
 
-/* Color combinations */
+/* COLOR CLASSES */
 .c-negro  {background:#222!important;color:white!important;}
 .c-amarillo{background:var(--yellow)!important;color:#111!important;}
 .c-verde  {background:var(--green)!important;color:white!important;}
 
-/* ═══════════════════════════════════════════
-   PRINT — 2 jamaitas per page (Letter/A4)
-═══════════════════════════════════════════ */
-.j-print-sheet{padding:10px;}
-.j-page-pair{
-  display:grid;grid-template-rows:1fr 1fr;
-  gap:10px;max-width:760px;margin:0 auto;
-}
-
+/* ── PRINT — 2 per page ── */
 @media print{
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
-
   body{background:white!important;margin:0;padding:0;}
   .app-hdr,.j-bar{display:none!important;}
   #jamaita-panel{display:block!important;}
-
-  .j-print-sheet{
-    padding:0;
-    display:block;
-  }
-  .j-page-pair{
-    display:grid;
-    grid-template-rows:1fr 1fr;
-    gap:5mm;
-    max-width:100%;
-    margin:0;
-    /* Fill the printable area of one page */
-    height:calc(100vh - 16mm);
-    padding:8mm;
+  .j-sheet{padding:0;}
+  .j-pair{
+    display:grid;grid-template-rows:1fr 1fr;
+    gap:5mm;max-width:100%;margin:0;
+    height:calc(100vh - 16mm);padding:8mm;
     page-break-after:always;
   }
-  .j-wrap{
-    max-width:100%;
-    padding:0;
-    height:100%;
-    display:flex;flex-direction:column;
-  }
+  .j-wrap{height:100%;display:flex;flex-direction:column;}
   .jamaita{flex:1;border:1.5pt solid #111;}
-
-  /* Rows flex to fill available height */
-  .j-top{min-height:0;height:12%;}
-  .j-mid{min-height:0;height:56%;}
-  .j-bot{min-height:0;height:32%;}
-  .j-f1{min-height:0;}
-  .j-f2{min-height:0;}
-  .j-f3{min-height:0;}
-  .j-f11{min-height:0;}
-  .j-mmval{min-height:0;}
-
-  /* Ensure colors print */
+  .j-top{min-height:0;}
+  .j-f1,.j-f2,.j-f3,.j-f11,.j-mmval{min-height:0;}
   .c-negro{background:#222!important;color:white!important;}
   .c-amarillo{background:#FFC000!important;color:#111!important;}
   .c-verde{background:#00B050!important;color:white!important;}
   .j-mmcell.mn .j-mmlbl,.j-mmcell.mn .j-mmval{background:#FF0000!important;color:white!important;}
   .j-mmcell.mx .j-mmlbl,.j-mmcell.mx .j-mmval{background:#92D050!important;color:#111!important;}
-  .j-vlbl,.j-mmcell.mn,.j-mmcell.mx{print-color-adjust:exact!important;}
 }
 
 /* loading */
@@ -340,15 +253,11 @@ body{font-family:'Barlow',sans-serif;background:#e0e0e0;min-height:100vh;}
 <body>
 
 <div class="app-hdr">
-  <div>
-    <div class="hdr-brand">KTMEX</div>
-    <div class="hdr-sub">Visor de Jamaitas</div>
-  </div>
+  <div class="hdr-brand">KTMEX</div>
+  <div class="hdr-sub">Visor de Jamaitas</div>
 </div>
 
-<!-- ╔═══════════════╗
-     ║    SEARCH     ║
-     ╚═══════════════╝ -->
+<!-- SEARCH -->
 <div class="panel on" id="search-panel">
   <div class="card">
     <h2>Consultar Jamaita</h2>
@@ -362,9 +271,7 @@ body{font-family:'Barlow',sans-serif;background:#e0e0e0;min-height:100vh;}
   </div>
 </div>
 
-<!-- ╔═══════════════╗
-     ║     MODE      ║
-     ╚═══════════════╝ -->
+<!-- MODE -->
 <div class="panel" id="mode-panel">
   <div class="card">
     <h2>Sebango encontrado</h2>
@@ -387,9 +294,7 @@ body{font-family:'Barlow',sans-serif;background:#e0e0e0;min-height:100vh;}
   </div>
 </div>
 
-<!-- ╔═══════════════╗
-     ║    ARROWS     ║
-     ╚═══════════════╝ -->
+<!-- ARROWS -->
 <div class="panel" id="arrow-panel">
   <div class="card">
     <h2>Selecciona la dirección</h2>
@@ -417,29 +322,20 @@ body{font-family:'Barlow',sans-serif;background:#e0e0e0;min-height:100vh;}
   </div>
 </div>
 
-<!-- ╔═══════════════╗
-     ║   JAMAITA     ║
-     ╚═══════════════╝ -->
+<!-- JAMAITA -->
 <div class="panel" id="jamaita-panel">
   <div class="j-bar">
     <button class="tbtn" onclick="goTo('search')">＋ Nueva consulta</button>
     <button class="tbtn dk" onclick="window.print()">🖨 Imprimir · 2 por hoja</button>
   </div>
-  <div class="j-print-sheet">
-    <div class="j-page-pair">
-      <!-- Jamaita 1 -->
-      <div class="j-wrap" id="jw1">
-        <div class="jamaita" id="j1"></div>
-      </div>
-      <!-- Jamaita 2 (identical copy for printing) -->
-      <div class="j-wrap" id="jw2">
-        <div class="jamaita" id="j2"></div>
-      </div>
+  <div class="j-sheet">
+    <div class="j-pair">
+      <div class="j-wrap"><div class="jamaita" id="j1"></div></div>
+      <div class="j-wrap"><div class="jamaita" id="j2"></div></div>
     </div>
   </div>
 </div>
 
-<!-- LOADING -->
 <div class="lov" id="loader">
   <div class="lbox">
     <div class="sp"></div>
@@ -448,25 +344,25 @@ body{font-family:'Barlow',sans-serif;background:#e0e0e0;min-height:100vh;}
 </div>
 
 <script>
-/* ── CONFIG ── */
+/* CONFIG */
 const SB_URL = 'https://zmcogptrdmgneblvvtox.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptY29ncHRyZG1nbmVibHZ2dG94Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMDQ0ODksImV4cCI6MjA4OTg4MDQ4OX0.rT8fe3wRfsx6pa3JP9HyMuIguhQICpOlJFgccmMfBrg';
-const TBL = 'jamaitas_bd';
+const TBL      = 'jamaitas_bd';
 const BKT_CLI  = 'jamaitas-clientes';
 const BKT_PROD = 'jamaitas-productos';
 
-/* Arrow SVGs (inline, sized for jamaita) */
-const ARR = {
-  1:`<svg viewBox="0 0 100 70" style="width:88%;max-height:56px"><polygon points="50,3 97,67 50,50 3,67" fill="#111"/></svg>`,
-  2:`<svg viewBox="0 0 100 70" style="width:88%;max-height:56px"><polygon points="50,67 97,3 50,20 3,3" fill="#111"/></svg>`,
-  3:`<svg viewBox="0 0 100 70" style="width:88%;max-height:56px"><polygon points="3,35 67,3 50,35 67,67" fill="#111"/></svg>`,
-  4:`<svg viewBox="0 0 100 70" style="width:88%;max-height:56px"><polygon points="97,35 33,3 50,35 33,67" fill="#111"/></svg>`,
+/* 3 arrows distributed in the campo4 space */
+const ARR_SVG = {
+  1: `<svg viewBox="0 0 60 80" width="52" height="68"><polygon points="30,3 57,73 30,55 3,73" fill="#111"/></svg>`,
+  2: `<svg viewBox="0 0 60 80" width="52" height="68"><polygon points="30,77 57,7 30,25 3,7" fill="#111"/></svg>`,
+  3: `<svg viewBox="0 0 80 60" width="68" height="52"><polygon points="3,30 73,3 55,30 73,57" fill="#111"/></svg>`,
+  4: `<svg viewBox="0 0 80 60" width="68" height="52"><polygon points="77,30 7,3 25,30 7,57" fill="#111"/></svg>`,
 };
 
 let db, rec, arw;
 window.onload = () => { db = window.supabase.createClient(SB_URL, SB_KEY); };
 
-/* ── NAV ── */
+/* NAV */
 function goTo(p){
   document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));
   document.getElementById(p+'-panel').classList.add('on');
@@ -483,7 +379,7 @@ function goTo(p){
 }
 function load(v){document.getElementById('loader').className='lov'+(v?' on':'');}
 
-/* ── SEARCH ── */
+/* SEARCH */
 async function buscar(){
   const s=document.getElementById('seb').value.trim();
   if(!s)return;
@@ -503,10 +399,10 @@ async function buscar(){
   goTo('mode');
 }
 
-/* ── MODE ── */
+/* MODE */
 function selMode(m){if(m==='ubicacion')render(null);else goTo('arrow');}
 
-/* ── ARROWS ── */
+/* ARROWS */
 function pickA(n){
   arw=n;
   [1,2,3,4].forEach(i=>document.getElementById('ao'+i).className='ao'+(i===n?' sel':''));
@@ -514,8 +410,8 @@ function pickA(n){
 }
 function okArrow(){if(arw)render(arw);}
 
-/* ── COLOR LOGIC ── */
-function getColorCls(r){
+/* COLOR LOGIC */
+function getCC(r){
   if(r.color_custom&&/^#[0-9A-Fa-f]{6}$/.test(r.color_custom))return null;
   const l=(r.lado||'').toUpperCase();
   if(l==='NA')return 'c-negro';
@@ -523,57 +419,59 @@ function getColorCls(r){
   if(l==='RH')return 'c-verde';
   return '';
 }
-function getColorSty(r){
+function getCS(r){
   if(!r.color_custom||!/^#[0-9A-Fa-f]{6}$/.test(r.color_custom))return '';
   const h=r.color_custom.replace('#','');
   const rv=parseInt(h.substr(0,2),16),g=parseInt(h.substr(2,2),16),b=parseInt(h.substr(4,2),16);
   const br=(rv*299+g*587+b*114)/1000;
   return `background:${r.color_custom};color:${br>128?'#111':'#fff'};`;
 }
-function cAttrs(r,baseClass){
-  const cls=getColorCls(r),sty=getColorSty(r);
-  if(sty)return `class="${baseClass}" style="${sty}"`;
-  if(cls)return `class="${baseClass} ${cls}"`;
-  return `class="${baseClass}"`;
+function ca(r,base){
+  const cls=getCC(r),sty=getCS(r);
+  if(sty)return `class="${base}" style="${sty}"`;
+  if(cls)return `class="${base} ${cls}"`;
+  return `class="${base}"`;
 }
 
-/* ── BUILD JAMAITA HTML ── */
-function buildJamaita(r,arrVer,canvasId){
+/* BUILD HTML */
+function buildJ(r,arrVer,qrId){
   /* Campo 4 */
-  const c4 = arrVer
-    ? `<div class="j-f4-arrow">${ARR[arrVer]}</div>`
-    : `<div class="j-f4">${r.ubicacion||''}</div>`;
+  let c4;
+  if(arrVer){
+    /* 3 copies of the selected arrow distributed */
+    c4=`<div class="j-f4-arrows">
+      ${ARR_SVG[arrVer]}${ARR_SVG[arrVer]}${ARR_SVG[arrVer]}
+    </div>`;
+  } else {
+    c4=`<div class="j-f4">${r.ubicacion||''}</div>`;
+  }
 
-  /* Cliente img (campo 7) */
-  const cliSrc = r.cliente ? `${SB_URL}/storage/v1/object/public/${BKT_CLI}/${r.cliente}.png` : '';
-  const cliHtml = cliSrc
-    ? `<img src="${cliSrc}" alt="${r.cliente||''}"
-         onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
-       <div class="j-cli7-txt" style="display:none">${r.cliente||''}</div>`
-    : `<div class="j-cli7-txt">${r.cliente||''}</div>`;
+  /* Cliente img */
+  const cliSrc=r.cliente?`${SB_URL}/storage/v1/object/public/${BKT_CLI}/${r.cliente}.png`:'';
+  const cliH=cliSrc
+    ?`<img src="${cliSrc}" alt="${r.cliente||''}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="j-cli7-txt" style="display:none">${r.cliente||''}</div>`
+    :`<div class="j-cli7-txt">${r.cliente||''}</div>`;
 
-  /* Producto img (campo 11) */
-  const prSrc = r.numero_parte ? `${SB_URL}/storage/v1/object/public/${BKT_PROD}/${r.numero_parte}.JPG` : '';
-  const prHtml = prSrc
-    ? `<img src="${prSrc}" alt="${r.numero_parte||''}"
-         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-       <div class="j-f11-ph" style="display:none">⑪ Sin imagen</div>`
-    : `<div class="j-f11-ph">⑪ Sin imagen</div>`;
+  /* Producto img */
+  const prSrc=r.numero_parte?`${SB_URL}/storage/v1/object/public/${BKT_PROD}/${r.numero_parte}.JPG`:'';
+  const prH=prSrc
+    ?`<img src="${prSrc}" alt="${r.numero_parte||''}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="j-f11-ph" style="display:none">Sin imagen</div>`
+    :`<div class="j-f11-ph">Sin imagen</div>`;
 
   return `
   <div class="j-top">
     <div>${c4}</div>
     <div class="j-hcell">
-      <div class="j-hlbl">⑤ Empaque</div>
+      <div class="j-hlbl">Empaque</div>
       <div class="j-hval">${r.tipo_caja||''}</div>
     </div>
     <div class="j-hcell">
-      <div class="j-hlbl">⑥ QPC</div>
+      <div class="j-hlbl">QPC</div>
       <div class="j-hval" style="font-size:clamp(14px,2.5vw,30px);font-weight:900">${r.qpc??''}</div>
     </div>
     <div class="j-hcell">
-      <div class="j-hlbl">⑦ Cliente</div>
-      <div class="j-cli7">${cliHtml}</div>
+      <div class="j-hlbl">Cliente</div>
+      <div class="j-cli7">${cliH}</div>
     </div>
   </div>
 
@@ -581,14 +479,14 @@ function buildJamaita(r,arrVer,canvasId){
     <div class="j-vlbl">KTMEX</div>
     <div class="j-midR">
       <div class="j-c12">
-        <div ${cAttrs(r,'j-f1')}>① ${r.sebango||''}</div>
-        <div class="j-f2">② ${r.numero_parte||''}</div>
+        <div ${ca(r,'j-f1')}>${r.sebango||''}</div>
+        <div class="j-f2">${r.numero_parte||''}</div>
       </div>
-      <div class="j-f11">${prHtml}</div>
+      <div class="j-f11">${prH}</div>
       <div class="j-qr">
         <div class="j-qr-lbl">QR</div>
-        <div class="j-qr-c"><canvas id="${canvasId}"></canvas></div>
-        <div class="j-qr-num">⑫ ${r.sebango||''}</div>
+        <div class="j-qr-img"><canvas id="${qrId}"></canvas></div>
+        <div class="j-qr-num">${r.sebango||''}</div>
       </div>
     </div>
   </div>
@@ -597,15 +495,15 @@ function buildJamaita(r,arrVer,canvasId){
     <div class="j-vlbl">CLIENTE</div>
     <div class="j-botR">
       <div class="j-f3w">
-        <div ${cAttrs(r,'j-f3')}>③ ${r.sebango_cliente||''}</div>
+        <div ${ca(r,'j-f3')}>${r.sebango_cliente||''}</div>
       </div>
       <div class="j-mm">
         <div class="j-mmcell mn">
-          <div class="j-mmlbl">⑧ Mínimo de cajas</div>
+          <div class="j-mmlbl">Mínimo de cajas</div>
           <div class="j-mmval">${r.minimo??''}</div>
         </div>
         <div class="j-mmcell mx">
-          <div class="j-mmlbl">⑨ Máximo de cajas</div>
+          <div class="j-mmlbl">Máximo de cajas</div>
           <div class="j-mmval">${r.maximo??''}</div>
         </div>
       </div>
@@ -613,28 +511,31 @@ function buildJamaita(r,arrVer,canvasId){
   </div>`;
 }
 
-function genQR(id,text){
+/* QR */
+function makeQR(id,text){
   const c=document.getElementById(id);
   if(!c)return;
   try{
     QRCode.toCanvas(c,text||'KTMEX',
-      {width:76,margin:1,color:{dark:'#000000',light:'#ffffff'}},
-      ()=>{});
+      {width:80,margin:1,color:{dark:'#000000',light:'#ffffff'}},
+      err=>{ if(err)console.warn('QR:',err); });
   }catch(e){console.warn('QR error:',e);}
 }
 
-/* ── RENDER ── */
+/* RENDER */
 function render(arrVer){
   load(true);
-  document.getElementById('j1').innerHTML = buildJamaita(rec,arrVer,'qr1');
-  document.getElementById('j2').innerHTML = buildJamaita(rec,arrVer,'qr2');
+  document.getElementById('j1').innerHTML=buildJ(rec,arrVer,'qr1');
+  document.getElementById('j2').innerHTML=buildJ(rec,arrVer,'qr2');
   load(false);
   goTo('jamaita');
-  /* QR after panel is visible */
-  setTimeout(()=>{
-    genQR('qr1', rec.sebango||'KTMEX');
-    genQR('qr2', rec.sebango||'KTMEX');
-  },200);
+  /* Generate QR after DOM is painted */
+  requestAnimationFrame(()=>{
+    setTimeout(()=>{
+      makeQR('qr1',rec.sebango||'KTMEX');
+      makeQR('qr2',rec.sebango||'KTMEX');
+    },100);
+  });
 }
 </script>
 </body>
