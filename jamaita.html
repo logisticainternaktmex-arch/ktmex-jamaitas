@@ -6,7 +6,8 @@
 <title>KTMEX — Visor Jamaitas</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;900&family=Barlow:wght@400;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<!-- QR generation via API - siempre nítido y escaneable -->
+
 <style>
 /*
   MEDIDAS EXACTAS — Ingeniería inversa del Excel ajustado por usuario
@@ -529,29 +530,17 @@ function buildJ(r,arrVer,qrDivId){
   </div>`;
 }
 
-function makeQR(divId,text){
-  const el=document.getElementById(divId);
-  if(!el)return;
-  el.innerHTML='';
-  /* Get actual pixel size of the QR column to fill it */
-  const col=el.closest('.j-qr-col');
-  const sz=col ? Math.min(col.offsetWidth-4, col.offsetHeight-4, 120) : 100;
-  try{
-    new QRCode(el,{
-      text:text||'KTMEX',
-      width:sz,height:sz,
-      colorDark:'#000000',colorLight:'#ffffff',
-      correctLevel:QRCode.CorrectLevel.L
-    });
-    setTimeout(()=>{
-      const img=el.querySelector('img');
-      if(img)img.style.cssText='max-width:100%;max-height:100%;width:auto;height:auto;display:block;';
-      const cv=el.querySelector('canvas');
-      if(cv)cv.style.cssText='max-width:100%;max-height:100%;display:block;';
-    },60);
-  }catch(e){
-    el.innerHTML=`<div style="font-size:8px;color:#999;text-align:center">QR<br>${text}</div>`;
-  }
+/* ── QR via API — imagen perfecta, siempre escaneable ── */
+function makeQR(divId, text){
+  const el = document.getElementById(divId);
+  if(!el) return;
+  el.innerHTML = '';
+  const encoded = encodeURIComponent(text || 'KTMEX');
+  /* QR Server API: returns crisp PNG, no canvas rendering issues */
+  const url = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&ecc=L&data=${encoded}`;
+  el.innerHTML = `<img src="${url}"
+    style="width:100%;height:100%;max-width:120px;max-height:120px;object-fit:contain;display:block;"
+    alt="QR ${text}">`;
 }
 
 function render(arrVer){
