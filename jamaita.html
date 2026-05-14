@@ -475,20 +475,13 @@ function buildJ(r,arrVer,qrDivId){
     : `<span class="j-cli7-txt">${r.cliente||''}</span>`;
 
   const prBase = r.numero_parte ? `${SB_URL}/storage/v1/object/public/${BKT_PROD}/${r.numero_parte}` : '';
+  console.log('URL imagen producto:', prBase + '.jpg');
   const prH = prBase
     ? `<img
          src="${prBase}.jpg"
          alt="${r.numero_parte||''}"
          style="max-width:100%;max-height:39mm;object-fit:contain;"
-         onerror="
-           var t=this,s=t.src;
-           if(s.endsWith('.jpg'))       { t.src=s.replace('.jpg','.JPG'); }
-           else if(s.endsWith('.JPG'))  { t.src=s.replace('.JPG','.jpeg'); }
-           else if(s.endsWith('.jpeg')) { t.src=s.replace('.jpeg','.JPEG'); }
-           else if(s.endsWith('.JPEG')) { t.src=s.replace('.JPEG','.png'); }
-           else if(s.endsWith('.png'))  { t.src=s.replace('.png','.PNG'); }
-           else { t.style.display='none'; t.nextElementSibling.style.display='flex'; }
-         "
+         onerror="console.log('Falló:',this.src);var s=this.src;if(s.indexOf('.jpg')>-1&&s.indexOf('.JPG')==-1){this.src=s.replace('.jpg','.JPG');}else{this.style.display='none';this.nextElementSibling.style.display='flex';}"
        ><span class="j-f11-ph" style="display:none">Sin imagen</span>`
     : `<span class="j-f11-ph">Sin imagen</span>`;
 
