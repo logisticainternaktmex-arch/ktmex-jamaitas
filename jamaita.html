@@ -186,25 +186,22 @@ body{font-family:'Barlow Condensed',sans-serif;background:#d0d0d0;min-height:100
 .j-f11 img{max-width:100%;max-height:39mm;object-fit:contain;}
 .j-f11-ph{color:#ccc;font-size:9px;text-align:center;}
 
-/* QR column: label=27.39mm (aligned with campo1), code fills rest — QR completo abajo de la línea */
+/* QR column: todo el espacio para el código QR sin label ni línea */
 .j-qr-col{
-  display:grid;
-  grid-template-rows:27.39mm 1fr;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   overflow:hidden;
+  padding:1mm;
 }
-.j-qr-lbl{
-  font-size:9px;font-weight:700;
-  display:flex;align-items:center;justify-content:center;
-  color:#111;
-  border-bottom:2px solid #111;
-}
+.j-qr-lbl{ display:none; }
 .j-qr-img{
   display:flex;align-items:center;justify-content:center;
-  padding:1mm;overflow:hidden;
+  width:100%;height:100%;overflow:hidden;
 }
 .j-qr-img>div{display:flex;align-items:center;justify-content:center;width:100%;height:100%;}
 .j-qr-img img,.j-qr-img canvas{
-  max-width:100%!important;max-height:13mm!important;
+  max-width:100%!important;max-height:100%!important;
   width:auto!important;height:auto!important;
 }
 
@@ -543,18 +540,21 @@ function makeQR(divId,text){
   const el=document.getElementById(divId);
   if(!el)return;
   el.innerHTML='';
+  /* Get actual pixel size of the QR column to fill it */
+  const col=el.closest('.j-qr-col');
+  const sz=col ? Math.min(col.offsetWidth-4, col.offsetHeight-4, 120) : 100;
   try{
     new QRCode(el,{
       text:text||'KTMEX',
-      width:80,height:80,
+      width:sz,height:sz,
       colorDark:'#000000',colorLight:'#ffffff',
-      correctLevel:QRCode.CorrectLevel.L  /* L = menos datos, QR más pequeño y fácil de escanear */
+      correctLevel:QRCode.CorrectLevel.L
     });
     setTimeout(()=>{
       const img=el.querySelector('img');
-      if(img)img.style.cssText='max-width:100%;max-height:13mm;width:auto;height:auto;display:block;';
+      if(img)img.style.cssText='max-width:100%;max-height:100%;width:auto;height:auto;display:block;';
       const cv=el.querySelector('canvas');
-      if(cv)cv.style.cssText='max-width:100%;max-height:13mm;display:block;';
+      if(cv)cv.style.cssText='max-width:100%;max-height:100%;display:block;';
     },60);
   }catch(e){
     el.innerHTML=`<div style="font-size:8px;color:#999;text-align:center">QR<br>${text}</div>`;
