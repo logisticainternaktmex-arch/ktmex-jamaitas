@@ -461,6 +461,10 @@ function ca(r,base){
 }
 
 function buildJ(r,arrVer,qrDivId){
+  /* DEBUG — ver en consola los valores del registro */
+  console.log('REGISTRO:', r);
+  console.log('numero_parte:', r.numero_parte);
+  console.log('cliente:', r.cliente);
   const c4 = arrVer
     ? `<div class="j-f4-arrows">${ARR[arrVer]}${ARR[arrVer]}${ARR[arrVer]}</div>`
     : `<div class="j-f4">${r.ubicacion||''}</div>`;
