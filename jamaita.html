@@ -475,9 +475,19 @@ function buildJ(r,arrVer,qrDivId){
 
   const prBase = r.numero_parte ? `${SB_URL}/storage/v1/object/public/${BKT_PROD}/${r.numero_parte}` : '';
   const prH = prBase
-    ? `<img src="${prBase}.jpg"
+    ? `<img
+         src="${prBase}.jpg"
          alt="${r.numero_parte||''}"
-         onerror="if(this.src.endsWith('.jpg')){this.src=this.src.replace('.jpg','.JPG')}else if(this.src.endsWith('.JPG')){this.src=this.src.replace('.JPG','.png')}else if(this.src.endsWith('.png')){this.src=this.src.replace('.png','.PNG')}else{this.style.display='none';this.nextElementSibling.style.display='flex';}"
+         style="max-width:100%;max-height:39mm;object-fit:contain;"
+         onerror="
+           var t=this,s=t.src;
+           if(s.endsWith('.jpg'))       { t.src=s.replace('.jpg','.JPG'); }
+           else if(s.endsWith('.JPG'))  { t.src=s.replace('.JPG','.jpeg'); }
+           else if(s.endsWith('.jpeg')) { t.src=s.replace('.jpeg','.JPEG'); }
+           else if(s.endsWith('.JPEG')) { t.src=s.replace('.JPEG','.png'); }
+           else if(s.endsWith('.png'))  { t.src=s.replace('.png','.PNG'); }
+           else { t.style.display='none'; t.nextElementSibling.style.display='flex'; }
+         "
        ><span class="j-f11-ph" style="display:none">Sin imagen</span>`
     : `<span class="j-f11-ph">Sin imagen</span>`;
 
