@@ -463,15 +463,21 @@ function buildJ(r,arrVer,qrDivId){
     ? `<div class="j-f4-arrows">${ARR[arrVer]}${ARR[arrVer]}${ARR[arrVer]}</div>`
     : `<div class="j-f4">${r.ubicacion||''}</div>`;
 
-  const cliSrc = r.cliente?`${SB_URL}/storage/v1/object/public/${BKT_CLI}/${r.cliente}.png`:'';
-  const cliH = cliSrc
-    ?`<img src="${cliSrc}" alt="${r.cliente||''}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span class="j-cli7-txt" style="display:none">${r.cliente||''}</span>`
-    :`<span class="j-cli7-txt">${r.cliente||''}</span>`;
+  const cliBase = r.cliente ? `${SB_URL}/storage/v1/object/public/${BKT_CLI}/${r.cliente}` : '';
+  const cliH = cliBase
+    ? `<img src="${cliBase}.png"
+         alt="${r.cliente||''}"
+         onerror="if(this.src.endsWith('.png')){this.src=this.src.replace('.png','.PNG')}else if(this.src.endsWith('.PNG')){this.src=this.src.replace('.PNG','.jpg')}else if(this.src.endsWith('.jpg')){this.src=this.src.replace('.jpg','.JPG')}else{this.style.display='none';this.nextElementSibling.style.display='block';}"
+       ><span class="j-cli7-txt" style="display:none">${r.cliente||''}</span>`
+    : `<span class="j-cli7-txt">${r.cliente||''}</span>`;
 
-  const prSrc = r.numero_parte?`${SB_URL}/storage/v1/object/public/${BKT_PROD}/${r.numero_parte}.JPG`:'';
-  const prH = prSrc
-    ?`<img src="${prSrc}" alt="${r.numero_parte||''}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span class="j-f11-ph" style="display:none">Sin imagen</span>`
-    :`<span class="j-f11-ph">Sin imagen</span>`;
+  const prBase = r.numero_parte ? `${SB_URL}/storage/v1/object/public/${BKT_PROD}/${r.numero_parte}` : '';
+  const prH = prBase
+    ? `<img src="${prBase}.jpg"
+         alt="${r.numero_parte||''}"
+         onerror="if(this.src.endsWith('.jpg')){this.src=this.src.replace('.jpg','.JPG')}else if(this.src.endsWith('.JPG')){this.src=this.src.replace('.JPG','.png')}else if(this.src.endsWith('.png')){this.src=this.src.replace('.png','.PNG')}else{this.style.display='none';this.nextElementSibling.style.display='flex';}"
+       ><span class="j-f11-ph" style="display:none">Sin imagen</span>`
+    : `<span class="j-f11-ph">Sin imagen</span>`;
 
   return `
   <div class="j-top">
